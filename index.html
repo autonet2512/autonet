@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoNet — L'annonce automobile sans surprise</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bleu: #1246C8;
+  --bleu-clair: #1a56f0;
+  --bleu-pale: #EEF3FF;
+  --bleu-mid: #dce6ff;
+  --blanc: #ffffff;
+  --fond: #f7f8fc;
+  --texte: #0d0f1a;
+  --texte-muted: #6b7280;
+  --texte-light: #9ca3af;
+  --border: #e5e9f4;
+  --vert: #059669;
+  --orange: #ea580c;
+  --card: #ffffff;
+  --radius: 14px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Instrument Sans', sans-serif; background: var(--fond); color: var(--texte); overflow-x: hidden; }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border); height: 66px;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 40px;
+}
+.logo { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.8px; color: var(--texte); cursor: pointer; }
+.logo span { color: var(--bleu); }
+.nav-links { display: flex; gap: 32px; list-style: none; }
+.nav-links a { text-decoration: none; color: var(--texte-muted); font-size: 14px; font-weight: 500; transition: color 0.2s; cursor: pointer; }
+.nav-links a:hover { color: var(--bleu); }
+.nav-right { display: flex; gap: 10px; align-items: center; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 20px; border-radius: 8px;
+  font-family: 'Instrument Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s; border: none; text-decoration: none;
+}
+.btn-outline { background: transparent; color: var(--texte); border: 1.5px solid var(--border); }
+.btn-outline:hover { border-color: var(--bleu); color: var(--bleu); background: var(--bleu-pale); }
+.btn-primary { background: var(--bleu); color: #fff; box-shadow: 0 2px 12px rgba(18,70,200,0.25); }
+.btn-primary:hover { background: var(--bleu-clair); transform: translateY(-1px); }
+.btn-lg { padding: 14px 32px; font-size: 16px; border-radius: 10px; }
+.btn-vert { background: var(--vert); color: #fff; }
+.btn-vert:hover { background: #047857; }
+
+/* ── PAGES ── */
+.page { display: none; min-height: 100vh; padding-top: 66px; }
+.page.active { display: block; }
+
+/* ── HERO ── */
+.hero {
+  min-height: calc(100vh - 66px); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 60px 40px 80px; position: relative; overflow: hidden; background: var(--blanc);
+}
+.hero-bg-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px; opacity: 0.5; pointer-events: none;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px;
+  background: var(--bleu-pale); border: 1px solid var(--bleu-mid); border-radius: 100px;
+  font-size: 12px; font-weight: 600; color: var(--bleu); letter-spacing: 0.5px;
+  text-transform: uppercase; margin-bottom: 28px; position: relative;
+}
+.badge-dot { width: 6px; height: 6px; background: var(--bleu); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.4)} }
+.hero h1 {
+  font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+  font-size: clamp(44px, 7vw, 88px); line-height: 1; letter-spacing: -3px; margin-bottom: 24px; position: relative;
+}
+.hero h1 .highlight { color: var(--bleu); position: relative; display: inline-block; }
+.hero h1 .highlight::after {
+  content: ''; position: absolute; bottom: 4px; left: 0; right: 0;
+  height: 6px; background: var(--bleu-mid); border-radius: 3px; z-index: -1;
+}
+.hero-sub { font-size: 18px; color: var(--texte-muted); max-width: 580px; line-height: 1.65; margin-bottom: 40px; }
+.hero-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.hero-stats { display: flex; gap: 48px; margin-top: 60px; flex-wrap: wrap; justify-content: center; }
+.stat { text-align: center; }
+.stat-num { font-family: 'Bricolage Grotesque', sans-serif; font-size: 36px; font-weight: 800; }
+.stat-num span { color: var(--bleu); }
+.stat-label { font-size: 13px; color: var(--texte-muted); margin-top: 4px; }
+
+/* ── SEARCH ── */
+.search-wrap { padding: 0 40px 60px; display: flex; justify-content: center; background: var(--blanc); }
+.search-card {
+  background: var(--blanc); border: 1.5px solid var(--border); border-radius: 18px;
+  padding: 24px 28px; box-shadow: 0 4px 40px rgba(18,70,200,0.07);
+  display: grid; grid-template-columns: 1fr 1fr 160px auto; gap: 14px; align-items: end; width: 100%; max-width: 860px;
+}
+.sf { display: flex; flex-direction: column; gap: 6px; }
+.sf label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--texte-light); font-weight: 600; }
+.sf select, .sf input {
+  background: var(--fond); border: 1.5px solid var(--border); color: var(--texte);
+  padding: 11px 14px; border-radius: 9px; font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px; font-weight: 500; outline: none; transition: border-color 0.2s; appearance: none; width: 100%;
+}
+.sf select:focus, .sf input:focus { border-color: var(--bleu); box-shadow: 0 0 0 3px rgba(18,70,200,0.1); }
+
+/* ── LISTINGS ── */
+.listings-section { padding: 60px 40px; max-width: 1280px; margin: 0 auto; }
+.section-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 36px; flex-wrap: wrap; gap: 16px; }
+.section-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--bleu); font-weight: 700; margin-bottom: 8px; }
+.section-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(24px, 3vw, 36px); font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+.listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+/* ── CARD ── */
+.listing-card {
+  background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; transition: all 0.22s; cursor: pointer; position: relative;
+}
+.listing-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(18,70,200,0.1); border-color: var(--bleu-mid); }
+.listing-img {
+  width: 100%; height: 200px; background: linear-gradient(135deg, #dce6ff 0%, #e8eeff 100%);
+  display: flex; align-items: center; justify-content: center; font-size: 64px; position: relative;
+  background-size: cover !important; background-position: center !important;
+}
+.listing-img-count {
+  position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6);
+  color: #fff; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+}
+.listing-badges { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.badge-vert { background: rgba(5,150,105,0.9); color: #fff; }
+.listing-body { padding: 18px 20px; }
+.listing-make { font-size: 12px; color: var(--texte-light); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.listing-name { font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
+.listing-specs { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+.spec { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--texte-muted); }
+.listing-docs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.doc-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; background: var(--fond); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; font-weight: 600; color: var(--texte-muted); }
+.doc-tag.active { background: #ecfdf5; border-color: #a7f3d0; color: var(--vert); }
+.listing-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--border); }
+.listing-price { font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 800; }
+.listing-price span { font-size: 14px; font-weight: 400; color: var(--texte-light); }
+.listing-loc { font-size: 12px; color: var(--texte-light); }
+
+/* ── DETAIL ── */
+.detail-section { padding: 40px; max-width: 1280px; margin: 0 auto; }
+.detail-grid { display: grid; grid-template-columns: 1fr 380px; gap: 32px; align-items: start; }
+.detail-main-img {
+  border-radius: var(--radius); background: var(--bleu-pale); aspect-ratio: 16/9;
+  display: flex; align-items: center; justify-content: center; font-size: 80px;
+  margin-bottom: 14px; border: 1.5px solid var(--border);
+}
+.fiche-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 28px; }
+.fiche-item { display: flex; justify-content: space-between; padding: 12px 16px; background: var(--fond); border-radius: 9px; font-size: 14px; }
+.fiche-key { color: var(--texte-muted); font-weight: 500; }
+.fiche-val { font-weight: 600; }
+.detail-sidebar { position: sticky; top: 86px; display: flex; flex-direction: column; gap: 16px; }
+.sidebar-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.annonce-price-big { font-family: 'Bricolage Grotesque', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+.annonce-price-sub { font-size: 13px; color: var(--texte-light); margin-bottom: 20px; }
+.sidebar-actions { display: flex; flex-direction: column; gap: 10px; }
+.score-global { display: flex; align-items: center; gap: 14px; padding: 16px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; margin-bottom: 16px; }
+.score-num { font-family: 'Bricolage Grotesque', sans-serif; font-size: 40px; font-weight: 800; color: var(--vert); line-height: 1; }
+
+/* ── FORM ── */
+.form-section { padding: 60px 40px; max-width: 760px; margin: 0 auto; }
+.form-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+.form-sub { color: var(--texte-muted); margin-bottom: 36px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.form-group label { font-size: 13px; font-weight: 600; color: var(--texte); }
+.form-group input, .form-group select, .form-group textarea {
+  background: var(--blanc); border: 1.5px solid var(--border); color: var(--texte);
+  padding: 12px 16px; border-radius: 9px; font-family: 'Instrument Sans', sans-serif;
+  font-size: 15px; outline: none; transition: border-color 0.2s; width: 100%;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--bleu); box-shadow: 0 0 0 3px rgba(18,70,200,0.1); }
+.form-group textarea { height: 120px; resize: vertical; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-section-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700; margin: 28px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+/* ── AUTH ── */
+.auth-section { min-height: calc(100vh - 66px); display: flex; align-items: center; justify-content: center; padding: 40px; }
+.auth-card { background: var(--blanc); border: 1.5px solid var(--border); border-radius: 20px; padding: 48px; width: 100%; max-width: 440px; box-shadow: 0 8px 40px rgba(18,70,200,0.08); }
+.auth-logo { font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 32px; text-align: center; }
+.auth-logo span { color: var(--bleu); }
+.auth-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+.auth-sub { color: var(--texte-muted); font-size: 14px; margin-bottom: 32px; }
+.auth-switch { text-align: center; margin-top: 24px; font-size: 14px; color: var(--texte-muted); }
+.auth-switch a { color: var(--bleu); font-weight: 600; cursor: pointer; text-decoration: none; }
+.auth-switch a:hover { text-decoration: underline; }
+
+/* ── DASHBOARD ── */
+.dashboard-section { padding: 40px; max-width: 1000px; margin: 0 auto; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; flex-wrap: wrap; gap: 16px; }
+.dashboard-annonce { background: var(--blanc); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 16px; flex-wrap: wrap; }
+.dashboard-annonce-info { flex: 1; }
+.dashboard-annonce-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 16px; font-weight: 700; }
+.dashboard-annonce-sub { font-size: 13px; color: var(--texte-muted); margin-top: 3px; }
+.dashboard-actions { display: flex; gap: 10px; }
+
+/* ── ALERTS ── */
+.alert { padding: 14px 18px; border-radius: 10px; font-size: 14px; font-weight: 500; margin-bottom: 20px; }
+.alert-success { background: #ecfdf5; border: 1px solid #a7f3d0; color: var(--vert); }
+.alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+
+/* ── LOADER ── */
+.loader { display: flex; align-items: center; justify-content: center; padding: 60px; }
+.spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--bleu); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── AVANTAGES ── */
+.avantages-section { background: var(--bleu); padding: 80px 40px; }
+.avantages-inner { max-width: 1280px; margin: 0 auto; }
+.avantages-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-top: 48px; }
+.avantage-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius); padding: 28px; transition: background 0.2s; }
+.avantage-card:hover { background: rgba(255,255,255,0.13); }
+.avantage-icon { font-size: 28px; margin-bottom: 16px; }
+.avantage-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.avantage-text { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.6; }
+
+/* ── FOOTER ── */
+footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; }
+.footer-inner { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-logo { font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 800; color: #fff; }
+.footer-logo span { color: var(--bleu-clair); }
+
+/* ── SECTIONS ANNONCE ── */
+.annonce-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.annonce-tab {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texte-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.annonce-tab:hover { color: var(--bleu); }
+.annonce-tab.active { color: var(--bleu); border-bottom-color: var(--bleu); }
+.annonce-tab-content { display: none; }
+.annonce-tab-content.active { display: block; }
+
+/* Défauts */
+.defauts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.defaut-card {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.defaut-card:hover { border-color: var(--bleu); }
+.defaut-img {
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  width: 100%;
+  display: block;
+}
+.defaut-label {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texte-muted);
+  background: var(--fond);
+}
+
+/* Entretien */
+.entretien-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  background: var(--fond);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.entretien-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--bleu-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.entretien-info { flex: 1; }
+.entretien-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.entretien-sub { font-size: 12px; color: var(--texte-light); }
+.entretien-link {
+  font-size: 12px; color: var(--bleu); font-weight: 600;
+  text-decoration: none; display: flex; align-items: center; gap: 4px;
+}
+.entretien-link:hover { text-decoration: underline; }
+
+/* CT */
+.ct-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  background: var(--fond);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.ct-result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ct-ok { background: #ecfdf5; color: var(--vert); border: 1px solid #a7f3d0; }
+.ct-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+
+/* ── LIGHTBOX ── */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.lightbox.open { display: flex; }
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.lightbox-close {
+  position: absolute;
+  top: 20px; right: 24px;
+  color: #fff;
+  font-size: 36px;
+  cursor: pointer;
+  font-weight: 300;
+  line-height: 1;
+}
+.lightbox-nav {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+}
+.lightbox-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.lightbox-btn:hover { background: rgba(255,255,255,0.25); }
+.lightbox-counter {
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  margin-top: 12px;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 80px 20px; color: var(--texte-muted); }
+.empty-state .empty-icon { font-size: 64px; margin-bottom: 20px; }
+.empty-state h3 { font-family: 'Bricolage Grotesque', sans-serif; font-size: 24px; font-weight: 700; color: var(--texte); margin-bottom: 10px; }
+
+@media (max-width: 900px) {
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .search-card { grid-template-columns: 1fr 1fr; }
+  .detail-grid { grid-template-columns: 1fr; }
+  .fiche-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .listings-section, .detail-section, .form-section, .dashboard-section { padding: 24px 20px; }
+  .avantages-section { padding: 60px 20px; }
+  .search-wrap { padding: 0 20px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="showPage('accueil')">Auto<span>Net</span></div>
+  <ul class="nav-links">
+    <li><a onclick="showPage('accueil')">Accueil</a></li>
+    <li><a onclick="showPage('annonces')">Annonces</a></li>
+    <li><a onclick="showPage('deposer')">Déposer une annonce</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right">
+    <a onclick="showPage('connexion')" class="btn btn-outline">Se connecter</a>
+    <a onclick="showPage('inscription')" class="btn btn-primary">S'inscrire</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE ACCUEIL -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-accueil" class="page active">
+  <section class="hero">
+    <div class="hero-bg-grid"></div>
+    <div class="hero-badge"><div class="badge-dot"></div> La vente auto transparente</div>
+    <h1>Achetez & vendez<br>sans <span class="highlight">aucune surprise</span></h1>
+    <p class="hero-sub">AutoNet, c'est l'annonce automobile complète : 10 photos, carnet d'entretien, état carrosserie documenté, historique CT. Le vendeur répond une fois. L'acheteur arrive confiant.</p>
+    <div class="hero-actions">
+      <a onclick="showPage('annonces')" class="btn btn-primary btn-lg">🔍 Parcourir les annonces</a>
+      <a onclick="showPage('deposer')" class="btn btn-outline btn-lg">Vendre mon véhicule</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">10<span>+</span></div><div class="stat-label">Photos par annonce</div></div>
+      <div class="stat"><div class="stat-num">100<span>%</span></div><div class="stat-label">Gratuit pour les particuliers</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Surprise à la visite</div></div>
+    </div>
+  </section>
+
+  <div class="search-wrap">
+    <div class="search-card">
+      <div class="sf"><label>Type</label><select id="search-type"><option value="">Tous</option><option>Voiture</option><option>Moto</option></select></div>
+      <div class="sf"><label>Marque / Modèle</label><input type="text" id="search-marque" placeholder="Ex : Renault Clio..."></div>
+      <div class="sf"><label>Budget max</label><select id="search-budget"><option value="">Tous budgets</option><option value="5000">< 5 000 €</option><option value="10000">< 10 000 €</option><option value="20000">< 20 000 €</option><option value="30000">< 30 000 €</option></select></div>
+      <button class="btn btn-primary btn-lg" onclick="rechercherAnnonces()">🔍 Rechercher</button>
+    </div>
+  </div>
+
+  <!-- Dernières annonces sur l'accueil -->
+  <section class="listings-section">
+    <div class="section-header">
+      <div><div class="section-eyebrow">Dernières annonces</div><h2 class="section-title">Véhicules disponibles</h2></div>
+      <a onclick="showPage('annonces')" class="btn btn-outline">Voir tout →</a>
+    </div>
+    <div class="listings-grid" id="accueil-listings">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+  </section>
+
+  <!-- Avantages -->
+  <section class="avantages-section">
+    <div class="avantages-inner">
+      <div class="section-eyebrow" style="color:rgba(255,255,255,0.5);">Pourquoi AutoNet ?</div>
+      <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-1.5px;color:#fff;">L'annonce auto réinventée</h2>
+      <div class="avantages-grid">
+        <div class="avantage-card"><div class="avantage-icon">📷</div><div class="avantage-title">10 photos gratuites</div><div class="avantage-text">Extérieur, intérieur, moteur, coffre, compteur. L'acheteur voit tout avant de se déplacer.</div></div>
+        <div class="avantage-card"><div class="avantage-icon">🔍</div><div class="avantage-title">État carrosserie documenté</div><div class="avantage-text">Chaque détail est photographié. L'acheteur arrive en confiance, sans mauvaise surprise.</div></div>
+        <div class="avantage-card"><div class="avantage-icon">🔧</div><div class="avantage-title">Carnet d'entretien</div><div class="avantage-text">Toutes les factures uploadables. Le vendeur ne répond plus 50 fois aux mêmes questions.</div></div>
+        <div class="avantage-card"><div class="avantage-icon">✅</div><div class="avantage-title">Historique CT complet</div><div class="avantage-text">Tous les contrôles techniques avec leur rapport PDF. L'historique complet en un coup d'œil.</div></div>
+        <div class="avantage-card"><div class="avantage-icon">📊</div><div class="avantage-title">Score de transparence</div><div class="avantage-text">Chaque annonce reçoit un score. Plus le dossier est complet, plus la confiance est grande.</div></div>
+        <div class="avantage-card"><div class="avantage-icon">🌍</div><div class="avantage-title">Pensé pour l'international</div><div class="avantage-text">Accessible depuis toute l'Europe. FR, EN, ES, DE, IT.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer><div class="footer-inner"><div class="footer-logo">Auto<span>Net</span></div><span>© 2025 AutoNet — Tous droits réservés</span><span>🇫🇷 France · 🇬🇧 UK · 🇩🇪 DE · 🇪🇸 ES</span></div></footer>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE ANNONCES -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-annonces" class="page">
+  <section class="listings-section">
+    <div class="section-header">
+      <div><div class="section-eyebrow">Toutes les annonces</div><h2 class="section-title" id="annonces-titre">Véhicules disponibles</h2></div>
+      <a onclick="showPage('deposer')" class="btn btn-primary">+ Déposer une annonce</a>
+    </div>
+    <div class="listings-grid" id="annonces-listings">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE DETAIL ANNONCE -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-detail" class="page">
+  <section class="detail-section">
+    <a onclick="showPage('annonces')" class="btn btn-outline" style="margin-bottom:24px;display:inline-flex;">← Retour aux annonces</a>
+    <div class="detail-grid">
+      <div>
+        <div id="detail-photos-gallery" style="margin-bottom:14px;">
+        <div class="detail-main-img" id="detail-main-img">🚗</div>
+        <div id="detail-thumbs" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
+      </div>
+        <!-- TABS -->
+        <div class="annonce-tabs">
+          <div class="annonce-tab active" onclick="switchAnnoncTab(this,'fiche')">📋 Fiche technique</div>
+          <div class="annonce-tab" onclick="switchAnnoncTab(this,'defauts')">🔍 État carrosserie</div>
+          <div class="annonce-tab" onclick="switchAnnoncTab(this,'entretien')">🔧 Entretien</div>
+          <div class="annonce-tab" onclick="switchAnnoncTab(this,'ct')">✅ Contrôle technique</div>
+        </div>
+
+        <!-- FICHE -->
+        <div class="annonce-tab-content active" id="atab-fiche">
+          <div class="fiche-grid" id="detail-fiche"></div>
+          <div style="padding:20px;background:var(--bleu-pale);border-radius:12px;font-size:14px;line-height:1.7;color:var(--texte-muted);margin-top:16px;" id="detail-description"></div>
+        </div>
+
+        <!-- DÉFAUTS CARROSSERIE -->
+        <div class="annonce-tab-content" id="atab-defauts">
+          <p style="font-size:14px;color:var(--texte-muted);margin-bottom:16px;line-height:1.6;">
+            Le vendeur a photographié et localisé chaque défaut visible. Aucune surprise à la visite.
+          </p>
+          <div class="defauts-grid" id="detail-defauts">
+            <div class="empty-state" style="grid-column:1/-1;padding:40px;">
+              <div class="empty-icon">✅</div>
+              <h3>Aucun défaut déclaré</h3>
+              <p>Le vendeur n'a signalé aucun défaut de carrosserie.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ENTRETIEN -->
+        <div class="annonce-tab-content" id="atab-entretien">
+          <p style="font-size:14px;color:var(--texte-muted);margin-bottom:16px;line-height:1.6;">
+            Historique complet des interventions et factures disponibles.
+          </p>
+          <div id="detail-entretien">
+            <div class="empty-state" style="padding:40px;">
+              <div class="empty-icon">🔧</div>
+              <h3>Aucun entretien renseigné</h3>
+              <p>Le vendeur n'a pas encore ajouté l'historique d'entretien.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CT -->
+        <div class="annonce-tab-content" id="atab-ct">
+          <p style="font-size:14px;color:var(--texte-muted);margin-bottom:16px;line-height:1.6;">
+            Historique complet des contrôles techniques avec rapports.
+          </p>
+          <div id="detail-ct">
+            <div class="empty-state" style="padding:40px;">
+              <div class="empty-icon">✅</div>
+              <h3>Aucun CT renseigné</h3>
+              <p>Le vendeur n'a pas encore ajouté les contrôles techniques.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-sidebar">
+        <div class="sidebar-card">
+          <div class="annonce-price-big" id="detail-prix"></div>
+          <div class="annonce-price-sub">Prix net vendeur · Particulier</div>
+          <div class="score-global">
+            <div class="score-num">9.2</div>
+            <div><div style="font-size:13px;font-weight:600;color:var(--texte);">Score de transparence</div><div style="font-size:12px;color:var(--texte-muted);margin-top:2px;">Dossier complet</div></div>
+          </div>
+          <div class="sidebar-actions">
+            <button class="btn btn-primary btn-lg" style="justify-content:center;" onclick="contacterVendeur()">📞 Contacter le vendeur</button>
+            <button class="btn btn-outline btn-lg" style="justify-content:center;">💾 Sauvegarder</button>
+          </div>
+        </div>
+        <div class="sidebar-card" style="font-size:13px;color:var(--texte-muted);line-height:1.7;">
+          <div style="font-weight:700;color:var(--texte);margin-bottom:10px;">📍 Vendeur</div>
+          <div id="detail-vendeur"></div>
+          <div style="margin-top:10px;color:var(--vert);font-weight:600;">✓ Profil vérifié</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE DÉPOSER ANNONCE -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-deposer" class="page">
+  <section class="form-section">
+    <h1 class="form-title">Déposer une annonce</h1>
+    <p class="form-sub">Remplissez le formulaire ci-dessous. Votre annonce sera publiée instantanément et gratuitement.</p>
+    <div id="deposer-alert"></div>
+    <div class="form-section-title">🚗 Informations du véhicule</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Marque *</label><input type="text" id="f-marque" placeholder="Ex : Renault"></div>
+      <div class="form-group"><label>Modèle *</label><input type="text" id="f-modele" placeholder="Ex : Clio"></div>
+      <div class="form-group"><label>Année *</label><input type="number" id="f-annee" placeholder="Ex : 2020"></div>
+      <div class="form-group"><label>Kilométrage *</label><input type="number" id="f-km" placeholder="Ex : 45000"></div>
+      <div class="form-group"><label>Prix (€) *</label><input type="number" id="f-prix" placeholder="Ex : 12000"></div>
+      <div class="form-group"><label>Carburant *</label>
+        <select id="f-carburant">
+          <option value="">Sélectionner</option>
+          <option>Essence</option><option>Diesel</option><option>Hybride</option><option>Électrique</option><option>GPL</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Type de véhicule *</label>
+      <select id="f-type"><option value="">Sélectionner</option><option>Voiture</option><option>Moto</option><option>Utilitaire</option></select>
+    </div>
+    <div class="form-group"><label>Localisation (Ville) *</label><input type="text" id="f-localisation" placeholder="Ex : Lyon"></div>
+    <div class="form-group"><label>Description</label><textarea id="f-description" placeholder="Décrivez votre véhicule : état général, options, historique..."></textarea></div>
+    <div class="form-section-title">📞 Vos coordonnées</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Votre prénom *</label><input type="text" id="f-prenom" placeholder="Ex : Jean-Marie"></div>
+      <div class="form-group"><label>Votre email *</label><input type="email" id="f-email" placeholder="contact@email.com"></div>
+    </div>
+    <div class="form-group"><label>Votre téléphone</label><input type="tel" id="f-tel" placeholder="Ex : 06 12 34 56 78"></div>
+    <div class="form-section-title">📷 Photos du véhicule</div>
+    <div class="form-group">
+      <label>Ajoutez jusqu'à 10 photos *</label>
+      <input type="file" id="f-photos" accept="image/*" multiple onchange="previewPhotos(this)" style="background:var(--blanc);border:2px dashed var(--bleu);color:var(--texte);padding:20px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;width:100%;cursor:pointer;">
+      <div id="photos-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
+    </div>
+
+    <div class="form-section-title">🔍 État carrosserie</div>
+    <p style="font-size:13px;color:var(--texte-muted);margin-bottom:16px;">Photographiez chaque défaut visible — rayures, chocs, impacts. L'acheteur arrivera sans surprise.</p>
+    <div class="form-group">
+      <label>Photos des défauts (optionnel)</label>
+      <input type="file" id="f-defauts" accept="image/*" multiple onchange="previewDefauts(this)" style="background:var(--blanc);border:2px dashed #f59e0b;color:var(--texte);padding:20px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;width:100%;cursor:pointer;">
+      <div id="defauts-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
+    </div>
+
+    <div class="form-section-title">🔧 Entretien & Factures</div>
+    <p style="font-size:13px;color:var(--texte-muted);margin-bottom:16px;">Ajoutez vos interventions d'entretien. Vous pouvez joindre une photo de facture ou remplir le tableau.</p>
+    <div id="entretien-items">
+      <div class="entretien-form-item" data-index="0" style="background:var(--fond);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div class="form-grid">
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Travaux effectués</label><input type="text" class="f-travaux" placeholder="Ex : Vidange + filtre"></div>
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Montant (€)</label><input type="number" class="f-montant" placeholder="Ex : 120"></div>
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Garage / Lieu</label><input type="text" class="f-garage" placeholder="Ex : Renault Lyon 7e"></div>
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Date</label><input type="date" class="f-date-entretien"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;">
+            ⚠️ <strong>Avant d'uploader une facture</strong>, pensez à masquer vos informations personnelles (nom, adresse, numéro de téléphone).
+          </div>
+          <label style="font-size:12px;">Photo de la facture (optionnel)</label>
+          <input type="file" class="f-facture" accept="image/*,application/pdf" style="background:var(--blanc);border:1.5px solid var(--border);padding:8px;border-radius:8px;font-size:13px;width:100%;">
+        </div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-outline" onclick="ajouterEntretien()" style="margin-bottom:24px;">+ Ajouter une intervention</button>
+
+    <div class="form-section-title">✅ Contrôle Technique</div>
+    <p style="font-size:13px;color:var(--texte-muted);margin-bottom:16px;">Ajoutez vos contrôles techniques avec le rapport PDF ou photo.</p>
+    <div id="ct-items">
+      <div class="ct-form-item" style="background:var(--fond);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div class="form-grid">
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Date du CT</label><input type="date" class="f-date-ct"></div>
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Résultat</label>
+            <select class="f-resultat-ct" style="background:var(--blanc);border:1.5px solid var(--border);padding:10px;border-radius:8px;font-size:14px;width:100%;">
+              <option value="Favorable">✅ Favorable</option>
+              <option value="Défaillance mineure">⚠️ Défaillance mineure</option>
+              <option value="Défaillance majeure">❌ Défaillance majeure</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Centre de contrôle</label><input type="text" class="f-centre-ct" placeholder="Ex : Autosur Lyon 8e"></div>
+          <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Kilométrage au CT</label><input type="number" class="f-km-ct" placeholder="Ex : 45000"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;">
+            ⚠️ <strong>Avant d'uploader votre rapport CT</strong>, pensez à masquer vos informations personnelles (nom, adresse, numéro de plaque si visible).
+          </div>
+          <label style="font-size:12px;">Rapport CT (photo ou PDF, optionnel)</label>
+          <input type="file" class="f-rapport-ct" accept="image/*,application/pdf" style="background:var(--blanc);border:1.5px solid var(--border);padding:8px;border-radius:8px;font-size:13px;width:100%;">
+        </div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-outline" onclick="ajouterCT()" style="margin-bottom:24px;">+ Ajouter un CT</button>
+
+    <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:12px;" onclick="publierAnnonce()">🚀 Publier mon annonce gratuitement</button>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE CONNEXION -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-connexion" class="page">
+  <div class="auth-section">
+    <div class="auth-card">
+      <div class="auth-logo">Auto<span>Net</span></div>
+      <h2 class="auth-title">Bon retour !</h2>
+      <p class="auth-sub">Connectez-vous pour gérer vos annonces.</p>
+      <div id="connexion-alert"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="c-email" placeholder="votre@email.com"></div>
+      <div class="form-group"><label>Mot de passe</label><input type="password" id="c-mdp" placeholder="••••••••"></div>
+      <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px;" onclick="seConnecter()">Se connecter</button>
+      <div class="auth-switch">Pas encore de compte ? <a onclick="showPage('inscription')">S'inscrire gratuitement</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE INSCRIPTION -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-inscription" class="page">
+  <div class="auth-section">
+    <div class="auth-card">
+      <div class="auth-logo">Auto<span>Net</span></div>
+      <h2 class="auth-title">Créer un compte</h2>
+      <p class="auth-sub">Gratuit et sans engagement.</p>
+      <div id="inscription-alert"></div>
+      <div class="form-group"><label>Prénom</label><input type="text" id="i-prenom" placeholder="Votre prénom"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="i-email" placeholder="votre@email.com"></div>
+      <div class="form-group"><label>Mot de passe</label><input type="password" id="i-mdp" placeholder="Minimum 6 caractères"></div>
+      <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px;" onclick="sInscrire()">Créer mon compte</button>
+      <div class="auth-switch">Déjà un compte ? <a onclick="showPage('connexion')">Se connecter</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE DASHBOARD -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-dashboard" class="page">
+  <section class="dashboard-section">
+    <div class="dashboard-header">
+      <div>
+        <div class="section-eyebrow">Mon espace</div>
+        <h2 class="section-title">Mes annonces</h2>
+      </div>
+      <a onclick="showPage('deposer')" class="btn btn-primary">+ Nouvelle annonce</a>
+    </div>
+    <div id="dashboard-alert"></div>
+    <div id="dashboard-annonces">
+      <div class="loader"><div class="spinner"></div></div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// ⚠️ REMPLACEZ CES DEUX LIGNES AVEC VOS CLÉS SUPABASE
+const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
+// ══════════════════════════════════════════════════
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let currentAnnonce = null;
+let searchParams = {};
+
+// ── NAVIGATION ──
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  window.scrollTo(0, 0);
+  if (page === 'accueil') chargerAccueilListings();
+  if (page === 'annonces') chargerAnnonces();
+  if (page === 'dashboard') chargerDashboard();
+}
+
+// ── AFFICHER UNE CARD ANNONCE ──
+function renderCard(a) {
+  // Charger la première photo depuis Supabase Storage
+  const photoUrl = db.storage.from('photos').getPublicUrl(`${a.id}/`).data.publicUrl;
+  return `
+    <div class="listing-card" onclick="voirDetail(${a.id})">
+      <div class="listing-img" id="card-img-${a.id}" style="background:linear-gradient(135deg,#dce6ff,#e8eeff);font-size:64px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
+        <img id="card-photo-${a.id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" src="">
+        <span id="card-emoji-${a.id}">${a.type === 'Moto' ? '🏍️' : '🚗'}</span>
+        <div class="listing-badges"><span class="badge badge-vert">✓ Annonce complète</span></div>
+        <div class="listing-img-count" id="card-count-${a.id}">📷 Photos</div>
+      </div>
+      <div class="listing-body">
+        <div class="listing-make">${a.marque || ''}</div>
+        <div class="listing-name">${a.modele || ''}</div>
+        <div class="listing-specs">
+          <span class="spec">📅 ${a.annee || ''}</span>
+          <span class="spec">🛣️ ${Number(a.kilometrage || 0).toLocaleString('fr-FR')} km</span>
+          <span class="spec">⛽ ${a.carburant || ''}</span>
+        </div>
+        <div class="listing-docs">
+          <span class="doc-tag active">🔧 Entretien fourni</span>
+          <span class="doc-tag active">📄 Factures dispo</span>
+          <span class="doc-tag active">📷 10 photos</span>
+        </div>
+        <div class="listing-footer">
+          <div class="listing-price">${Number(a.prix || 0).toLocaleString('fr-FR')} € <span>net vendeur</span></div>
+          <div class="listing-loc">📍 ${a.localisation || ''}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── CHARGER ANNONCES ACCUEIL ──
+async function chargerAccueilListings() {
+  const container = document.getElementById('accueil-listings');
+  container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  try {
+    const { data, error } = await db.from('annonces').select('*').order('created_at', { ascending: false }).limit(6);
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🚗</div><h3>Aucune annonce pour l'instant</h3><p>Soyez le premier à publier !</p></div>`;
+      return;
+    }
+    container.innerHTML = data.map(renderCard).join('');
+    setTimeout(() => chargerPhotosCards(data, 'page-accueil'), 100);
+  } catch(e) {
+    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement. Vérifiez vos clés Supabase.</p></div>`;
+  }
+}
+
+// ── CHARGER PHOTOS CARDS ──
+async function chargerPhotosCards(annonces, containerId) {
+  const scope = containerId ? document.getElementById(containerId) : document;
+  if (!scope) return;
+  for (const a of annonces) {
+    try {
+      const { data: files } = await db.storage.from('photos').list(String(a.id));
+      if (files && files.length > 0) {
+        const url = db.storage.from('photos').getPublicUrl(`${a.id}/${files[0].name}`).data.publicUrl;
+        const el = document.getElementById(`card-img-${a.id}`);
+        if (el) {
+          const imgEl = scope.querySelector(`#card-photo-${a.id}`);
+          const emojiEl = scope.querySelector(`#card-emoji-${a.id}`);
+          const countEl = scope.querySelector(`#card-count-${a.id}`);
+          if (imgEl) { imgEl.src = url; imgEl.style.display = 'block'; }
+          if (emojiEl) emojiEl.style.display = 'none';
+          if (countEl) countEl.textContent = `📷 ${files.length} photo${files.length > 1 ? 's' : ''}`;
+        }
+      }
+    } catch(e) {}
+  }
+}
+
+// ── CHARGER TOUTES LES ANNONCES ──
+async function chargerAnnonces(params = {}) {
+  const container = document.getElementById('annonces-listings');
+  container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  try {
+    let query = db.from('annonces').select('*').order('created_at', { ascending: false });
+    if (params.marque) query = query.ilike('marque', `%${params.marque}%`);
+    if (params.budget) query = query.lte('prix', params.budget);
+    if (params.type) query = query.eq('type', params.type);
+    const { data, error } = await query;
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>Aucune annonce trouvée</h3><p>Essayez avec d'autres critères.</p></div>`;
+      return;
+    }
+    document.getElementById('annonces-titre').textContent = `${data.length} véhicule${data.length > 1 ? 's' : ''} disponible${data.length > 1 ? 's' : ''}`;
+    container.innerHTML = data.map(renderCard).join('');
+    setTimeout(() => chargerPhotosCards(data, 'page-annonces'), 100);
+  } catch(e) {
+    container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement.</p></div>`;
+  }
+}
+
+// ── RECHERCHE ──
+function rechercherAnnonces() {
+  const params = {
+    marque: document.getElementById('search-marque').value,
+    budget: document.getElementById('search-budget').value,
+    type: document.getElementById('search-type').value,
+  };
+  showPage('annonces');
+  chargerAnnonces(params);
+}
+
+// ── VOIR DÉTAIL ──
+async function voirDetail(id) {
+  showPage('detail');
+  try {
+    const { data, error } = await db.from('annonces').select('*').eq('id', id).single();
+    if (error) throw error;
+    currentAnnonce = data;
+    document.getElementById('detail-prix').textContent = Number(data.prix || 0).toLocaleString('fr-FR') + ' €';
+    document.getElementById('detail-description').textContent = data.description || '';
+    chargerDefauts(id);
+    chargerEntretien(id);
+    chargerCT(id);
+    document.getElementById('detail-vendeur').innerHTML = `${data.prenom || 'Vendeur'} · ${data.localisation || ''}<br><span style="color:var(--texte-light)">${data.email || ''}</span>${data.telephone ? `<br>${data.telephone}` : ''}`;
+    // Load photos
+    const { data: photoFiles } = await db.storage.from('photos').list(String(id));
+    const mainImg = document.getElementById('detail-main-img');
+    const thumbsEl = document.getElementById('detail-thumbs');
+    if (photoFiles && photoFiles.length > 0) {
+      // Build URLs array for lightbox
+      window.currentGallery = photoFiles.map((f, i) => db.storage.from('photos').getPublicUrl(`${id}/${f.name}`).data.publicUrl);
+      window.currentGalleryIndex = 0;
+      
+      // Main image
+      mainImg.innerHTML = '';
+      mainImg.style.backgroundSize = 'cover';
+      mainImg.style.backgroundPosition = 'center';
+      mainImg.style.cursor = 'pointer';
+      mainImg.style.backgroundImage = `url('${window.currentGallery[0]}')`;
+      mainImg.onclick = () => ouvrirLightbox(0);
+
+      // Thumbnails
+      thumbsEl.innerHTML = '';
+      photoFiles.forEach((f, i) => {
+        const img = document.createElement('img');
+        img.src = window.currentGallery[i];
+        img.dataset.index = i;
+        img.style.cssText = 'width:72px;height:54px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;transition:border-color 0.2s;';
+        img.addEventListener('click', () => changerMainPhoto(window.currentGallery[i], i));
+        thumbsEl.appendChild(img);
+      });
+    }
+
+    document.getElementById('detail-fiche').innerHTML = `
+      <div class="fiche-item"><span class="fiche-key">Marque</span><span class="fiche-val">${data.marque || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Modèle</span><span class="fiche-val">${data.modele || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Année</span><span class="fiche-val">${data.annee || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Kilométrage</span><span class="fiche-val">${Number(data.kilometrage || 0).toLocaleString('fr-FR')} km</span></div>
+      <div class="fiche-item"><span class="fiche-key">Carburant</span><span class="fiche-val">${data.carburant || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Localisation</span><span class="fiche-val">${data.localisation || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Prix</span><span class="fiche-val">${Number(data.prix || 0).toLocaleString('fr-FR')} €</span></div>
+      <div class="fiche-item"><span class="fiche-key">Type</span><span class="fiche-val">${data.type || '-'}</span></div>
+    `;
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ── CHARGER DÉFAUTS ──
+async function chargerDefauts(id) {
+  const container = document.getElementById('detail-defauts');
+  try {
+    const { data: files, error } = await db.storage.from('defauts').list(String(id), { limit: 20 });
+    if (error || !files || files.length === 0) return;
+    const validFiles = files.filter(f => f.name && !f.name.startsWith('.'));
+    if (validFiles.length === 0) return;
+    container.innerHTML = '';
+    const grid = document.createElement('div');
+    grid.className = 'defauts-grid';
+    validFiles.forEach((f, i) => {
+      const url = db.storage.from('defauts').getPublicUrl(`${id}/${f.name}`).data.publicUrl;
+      const card = document.createElement('div');
+      card.className = 'defaut-card';
+      const img = document.createElement('img');
+      img.className = 'defaut-img';
+      img.src = url;
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', () => ouvrirLightboxDefaut(url));
+      const label = document.createElement('div');
+      label.className = 'defaut-label';
+      label.textContent = 'Défaut ' + (i + 1);
+      card.appendChild(img);
+      card.appendChild(label);
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+  } catch(e) { console.error('defauts error:', e); }
+}
+
+// ── CHARGER ENTRETIEN ──
+async function chargerEntretien(id) {
+  const container = document.getElementById('detail-entretien');
+  try {
+    const { data, error } = await db.from('entretiens').select('*').eq('annonce_id', id).order('date', { ascending: false });
+    if (error || !data || data.length === 0) return;
+    // Check for factures in storage
+    const entretienHtml = [];
+    for (const e of data) {
+      let factureHtml = '';
+      try {
+        const { data: factFiles } = await db.storage.from('factures').list(String(id));
+        const factFile = factFiles ? factFiles.find(f => f.name.startsWith(String(e.id))) : null;
+        if (factFile) {
+          const factUrl = db.storage.from('factures').getPublicUrl(`${id}/${factFile.name}`).data.publicUrl;
+          factureHtml = `<a href="${factUrl}" target="_blank" class="entretien-link">📄 Voir la facture</a>`;
+        }
+      } catch(fe) {}
+      entretienHtml.push(`
+        <div class="entretien-item">
+          <div class="entretien-icon">🔧</div>
+          <div class="entretien-info">
+            <div class="entretien-title">${e.travaux || ''}</div>
+            <div class="entretien-sub">${e.date ? new Date(e.date).toLocaleDateString('fr-FR') : ''} ${e.garage ? '· ' + e.garage : ''}</div>
+            ${factureHtml}
+          </div>
+          <div style="text-align:right;">
+            ${e.montant ? `<div style="font-weight:700;font-size:14px;">${e.montant} €</div>` : ''}
+          </div>
+        </div>`);
+    }
+    container.innerHTML = entretienHtml.join('');
+  } catch(e) {}
+}
+
+// ── CHARGER CT ──
+async function chargerCT(id) {
+  const container = document.getElementById('detail-ct');
+  try {
+    const { data, error } = await db.from('controles').select('*').eq('annonce_id', id).order('date', { ascending: false });
+    if (error || !data || data.length === 0) return;
+    
+    // Get rapport files once for all CT
+    let rapportFiles = [];
+    try {
+      const { data: rf } = await db.storage.from('rapports-ct').list(String(id));
+      rapportFiles = rf || [];
+    } catch(re) {}
+
+    const ctHtml = data.map(ct => {
+      const isOk = ct.resultat === 'Favorable';
+      const cls = isOk ? 'ct-ok' : 'ct-warning';
+      const icon = isOk ? '✅' : '⚠️';
+      const rapportFile = rapportFiles.find(f => f.name.startsWith(String(ct.id)));
+      let rapportHtml = '';
+      if (rapportFile) {
+        const rapportUrl = db.storage.from('rapports-ct').getPublicUrl(`${id}/${rapportFile.name}`).data.publicUrl;
+        rapportHtml = `<a href="${rapportUrl}" target="_blank" class="entretien-link" style="margin-top:4px;">📋 Voir le rapport</a>`;
+      }
+      return `
+        <div class="ct-item">
+          <div class="entretien-icon">${icon}</div>
+          <div class="entretien-info">
+            <div class="entretien-title">Contrôle technique</div>
+            <div class="entretien-sub">${ct.date ? new Date(ct.date).toLocaleDateString('fr-FR') : ''} ${ct.centre ? '· ' + ct.centre : ''} ${ct.kilometrage ? '· ' + ct.kilometrage.toLocaleString('fr-FR') + ' km' : ''}</div>
+            ${rapportHtml}
+          </div>
+          <div class="ct-result ${cls}">${ct.resultat}</div>
+        </div>`;
+    });
+    container.innerHTML = ctHtml.join('');
+  } catch(e) {}
+}
+
+// ── LIGHTBOX DÉFAUT ──
+function ouvrirLightboxDefaut(url) {
+  window.currentGallery = [url];
+  window.currentGalleryIndex = 0;
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox-counter').textContent = '';
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// ── CONTACTER VENDEUR ──
+function contacterVendeur() {
+  if (currentAnnonce && currentAnnonce.email) {
+    window.location.href = `mailto:${currentAnnonce.email}?subject=Intérêt pour votre annonce AutoNet : ${currentAnnonce.marque} ${currentAnnonce.modele}`;
+  }
+}
+
+// ── PREVIEW PHOTOS ──
+function previewPhotos(input) {
+  const preview = document.getElementById('photos-preview');
+  preview.innerHTML = '';
+  const files = Array.from(input.files).slice(0, 10);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style = 'width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── PUBLIER ANNONCE ──
+async function publierAnnonce() {
+  const alertEl = document.getElementById('deposer-alert');
+  const marque = document.getElementById('f-marque').value.trim();
+  const modele = document.getElementById('f-modele').value.trim();
+  const annee = document.getElementById('f-annee').value;
+  const km = document.getElementById('f-km').value;
+  const prix = document.getElementById('f-prix').value;
+  const carburant = document.getElementById('f-carburant').value;
+  const type = document.getElementById('f-type').value;
+  const localisation = document.getElementById('f-localisation').value.trim();
+  const description = document.getElementById('f-description').value.trim();
+  const prenom = document.getElementById('f-prenom').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const telephone = document.getElementById('f-tel').value.trim();
+  const photosInput = document.getElementById('f-photos');
+  const photos = photosInput ? Array.from(photosInput.files).slice(0, 10) : [];
+
+  if (!marque || !modele || !annee || !km || !prix || !carburant || !type || !localisation || !prenom || !email) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Veuillez remplir tous les champs obligatoires (*).</div>';
+    return;
+  }
+
+  const btn = event.currentTarget;
+  btn.textContent = 'Publication en cours...';
+  btn.disabled = true;
+
+  try {
+    const { data: annonce, error } = await db.from('annonces').insert([{
+      marque, modele, annee: parseInt(annee), kilometrage: parseInt(km),
+      prix: parseInt(prix), carburant, type, localisation, description,
+      prenom, email, telephone
+    }]).select().single();
+    if (error) throw error;
+
+    // Upload photos principales
+    if (photos.length > 0 && annonce) {
+      for (let i = 0; i < photos.length; i++) {
+        const file = photos[i];
+        const ext = file.name.split('.').pop();
+        const fileName = `${annonce.id}/${Date.now()}_${i}.${ext}`;
+        await db.storage.from('photos').upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+      }
+    }
+
+    // Upload photos défauts carrosserie
+    const defautsInput = document.getElementById('f-defauts');
+    const defauts = defautsInput ? Array.from(defautsInput.files) : [];
+    if (defauts.length > 0 && annonce) {
+      for (let i = 0; i < defauts.length; i++) {
+        const file = defauts[i];
+        const ext = file.name.split('.').pop();
+        const fileName = `${annonce.id}/${Date.now()}_${i}.${ext}`;
+        const { error: defautError } = await db.storage.from('defauts').upload(fileName, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+        if (defautError) console.error('Defaut upload error:', defautError);
+      }
+    }
+
+    // Save entretien items
+    if (annonce) {
+      const entretienItems = document.querySelectorAll('.entretien-form-item');
+      for (let i = 0; i < entretienItems.length; i++) {
+        const item = entretienItems[i];
+        const travaux = item.querySelector('.f-travaux')?.value?.trim();
+        const montant = item.querySelector('.f-montant')?.value;
+        const garage = item.querySelector('.f-garage')?.value?.trim();
+        const dateVal = item.querySelector('.f-date-entretien')?.value;
+        if (!travaux) continue;
+        const { data: entretienRow } = await db.from('entretiens').insert([{
+          annonce_id: annonce.id, travaux, montant: montant ? parseInt(montant) : null,
+          garage, date: dateVal || null
+        }]).select().single();
+        // Upload facture si présente
+        const factureFile = item.querySelector('.f-facture')?.files[0];
+        if (factureFile && entretienRow) {
+          const ext = factureFile.name.split('.').pop();
+          await db.storage.from('factures').upload(`${annonce.id}/${entretienRow.id}.${ext}`, factureFile, { contentType: factureFile.type });
+        }
+
+      }
+
+      // Save CT items
+      const ctItems = document.querySelectorAll('.ct-form-item');
+      for (let i = 0; i < ctItems.length; i++) {
+        const item = ctItems[i];
+        const dateVal = item.querySelector('.f-date-ct')?.value;
+        const resultat = item.querySelector('.f-resultat-ct')?.value;
+        const centre = item.querySelector('.f-centre-ct')?.value?.trim();
+        const kmCt = item.querySelector('.f-km-ct')?.value;
+        if (!dateVal && !resultat) continue;
+        const { data: ctRow } = await db.from('controles').insert([{
+          annonce_id: annonce.id, date: dateVal || null, resultat,
+          centre, kilometrage: kmCt ? parseInt(kmCt) : null
+        }]).select().single();
+        // Upload rapport CT si présent
+        const rapportFile = item.querySelector('.f-rapport-ct')?.files[0];
+        if (rapportFile && ctRow) {
+          const ext = rapportFile.name.split('.').pop();
+          await db.storage.from('rapports-ct').upload(`${annonce.id}/${ctRow.id}.${ext}`, rapportFile, { contentType: rapportFile.type });
+        }
+      }
+    }
+
+    alertEl.innerHTML = '<div class="alert alert-success">🎉 Votre annonce a été publiée avec succès !</div>';
+    ['f-marque','f-modele','f-annee','f-km','f-prix','f-localisation','f-description','f-prenom','f-email','f-tel'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-carburant').value = '';
+    document.getElementById('f-type').value = '';
+    document.getElementById('photos-preview').innerHTML = '';
+    setTimeout(() => showPage('annonces'), 2000);
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">❌ Erreur : ${e.message}</div>`;
+  } finally {
+    btn.textContent = '🚀 Publier mon annonce gratuitement';
+    btn.disabled = false;
+  }
+}
+
+// ── CONNEXION ──
+async function seConnecter() {
+  const alertEl = document.getElementById('connexion-alert');
+  const email = document.getElementById('c-email').value.trim();
+  const mdp = document.getElementById('c-mdp').value;
+  if (!email || !mdp) { alertEl.innerHTML = '<div class="alert alert-error">Remplissez tous les champs.</div>'; return; }
+  try {
+    const { data, error } = await db.auth.signInWithPassword({ email, password: mdp });
+    if (error) throw error;
+    currentUser = data.user;
+    mettreAJourNav();
+    showPage('dashboard');
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">❌ ${e.message}</div>`;
+  }
+}
+
+// ── INSCRIPTION ──
+async function sInscrire() {
+  const alertEl = document.getElementById('inscription-alert');
+  const prenom = document.getElementById('i-prenom').value.trim();
+  const email = document.getElementById('i-email').value.trim();
+  const mdp = document.getElementById('i-mdp').value;
+  if (!prenom || !email || !mdp) { alertEl.innerHTML = '<div class="alert alert-error">Remplissez tous les champs.</div>'; return; }
+  try {
+    const { data, error } = await db.auth.signUp({ email, password: mdp, options: { data: { prenom } } });
+    if (error) throw error;
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Compte créé ! Vérifiez votre email pour confirmer.</div>';
+  } catch(e) {
+    alertEl.innerHTML = `<div class="alert alert-error">❌ ${e.message}</div>`;
+  }
+}
+
+// ── DÉCONNEXION ──
+async function seDeconnecter() {
+  await db.auth.signOut();
+  currentUser = null;
+  mettreAJourNav();
+  showPage('accueil');
+}
+
+// ── MAJ NAV ──
+function mettreAJourNav() {
+  const navRight = document.getElementById('nav-right');
+  if (currentUser) {
+    navRight.innerHTML = `
+      <a onclick="showPage('dashboard')" class="btn btn-outline">Mon espace</a>
+      <a onclick="seDeconnecter()" class="btn btn-primary">Se déconnecter</a>`;
+  } else {
+    navRight.innerHTML = `
+      <a onclick="showPage('connexion')" class="btn btn-outline">Se connecter</a>
+      <a onclick="showPage('inscription')" class="btn btn-primary">S'inscrire</a>`;
+  }
+}
+
+// ── DASHBOARD ──
+async function chargerDashboard() {
+  if (!currentUser) { showPage('connexion'); return; }
+  const container = document.getElementById('dashboard-annonces');
+  container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  try {
+    const { data, error } = await db.from('annonces').select('*').eq('email', currentUser.email).order('created_at', { ascending: false });
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Aucune annonce</h3><p>Publiez votre première annonce !</p></div>`;
+      return;
+    }
+    container.innerHTML = data.map(a => `
+      <div class="dashboard-annonce">
+        <div class="dashboard-annonce-info">
+          <div class="dashboard-annonce-title">${a.marque} ${a.modele} · ${a.annee}</div>
+          <div class="dashboard-annonce-sub">${Number(a.prix || 0).toLocaleString('fr-FR')} € · ${Number(a.kilometrage || 0).toLocaleString('fr-FR')} km · ${a.localisation}</div>
+        </div>
+        <div class="dashboard-actions">
+          <button class="btn btn-outline" onclick="voirDetail(${a.id});showPage('detail')">Voir</button>
+          <button class="btn btn-outline" style="color:var(--orange);border-color:var(--orange);" onclick="supprimerAnnonce(${a.id})">Supprimer</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    container.innerHTML = `<div class="alert alert-error">Erreur de chargement.</div>`;
+  }
+}
+
+// ── SUPPRIMER ANNONCE ──
+async function supprimerAnnonce(id) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
+  try {
+    const { error } = await db.from('annonces').delete().eq('id', id);
+    if (error) throw error;
+    chargerDashboard();
+  } catch(e) {
+    document.getElementById('dashboard-alert').innerHTML = `<div class="alert alert-error">❌ Erreur lors de la suppression.</div>`;
+  }
+}
+
+// ── TABS ANNONCE ──
+function switchAnnoncTab(el, id) {
+  document.querySelectorAll('.annonce-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.annonce-tab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('atab-' + id).classList.add('active');
+}
+
+// ── PREVIEW DÉFAUTS ──
+function previewDefauts(input) {
+  const preview = document.getElementById('defauts-preview');
+  preview.innerHTML = '';
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid #fde68a;';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── AJOUTER ENTRETIEN ──
+function ajouterEntretien() {
+  const container = document.getElementById('entretien-items');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'entretien-form-item';
+  div.style.cssText = 'background:var(--fond);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;position:relative;';
+  div.innerHTML = `
+    <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--texte-light);font-size:18px;cursor:pointer;">×</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Travaux effectués</label><input type="text" class="f-travaux" placeholder="Ex : Vidange + filtre"></div>
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Montant (€)</label><input type="number" class="f-montant" placeholder="Ex : 120"></div>
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Garage / Lieu</label><input type="text" class="f-garage" placeholder="Ex : Renault Lyon 7e"></div>
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Date</label><input type="date" class="f-date-entretien"></div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;">
+      ⚠️ Avant d'uploader une facture, masquez vos informations personnelles (nom, adresse, téléphone).
+    </div>
+    <div class="form-group" style="margin-bottom:0;"><label style="font-size:12px;">Photo de la facture (optionnel)</label><input type="file" class="f-facture" accept="image/*,application/pdf" style="background:var(--blanc);border:1.5px solid var(--border);padding:8px;border-radius:8px;font-size:13px;width:100%;"></div>
+  `;
+  container.appendChild(div);
+}
+
+// ── AJOUTER CT ──
+function ajouterCT() {
+  const container = document.getElementById('ct-items');
+  const div = document.createElement('div');
+  div.className = 'ct-form-item';
+  div.style.cssText = 'background:var(--fond);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;position:relative;';
+  div.innerHTML = `
+    <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--texte-light);font-size:18px;cursor:pointer;">×</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Date du CT</label><input type="date" class="f-date-ct"></div>
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Résultat</label>
+        <select class="f-resultat-ct" style="background:var(--blanc);border:1.5px solid var(--border);padding:10px;border-radius:8px;font-size:14px;width:100%;">
+          <option value="Favorable">✅ Favorable</option>
+          <option value="Défaillance mineure">⚠️ Défaillance mineure</option>
+          <option value="Défaillance majeure">❌ Défaillance majeure</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Centre de contrôle</label><input type="text" class="f-centre-ct" placeholder="Ex : Autosur Lyon 8e"></div>
+      <div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Kilométrage au CT</label><input type="number" class="f-km-ct" placeholder="Ex : 45000"></div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;">
+      ⚠️ Avant d'uploader votre rapport CT, masquez vos informations personnelles (nom, adresse, plaque).
+    </div>
+    <div class="form-group" style="margin-bottom:0;"><label style="font-size:12px;">Rapport CT (photo ou PDF, optionnel)</label><input type="file" class="f-rapport-ct" accept="image/*,application/pdf" style="background:var(--blanc);border:1.5px solid var(--border);padding:8px;border-radius:8px;font-size:13px;width:100%;"></div>
+  `;
+  container.appendChild(div);
+}
+
+// ── GALERIE & LIGHTBOX ──
+function changerMainPhoto(url, index) {
+  const mainImg = document.getElementById('detail-main-img');
+  mainImg.style.backgroundImage = `url('${url}')`;
+  window.currentGalleryIndex = index;
+  // Update thumb borders
+  document.querySelectorAll('#detail-thumbs img').forEach((img, i) => {
+    img.style.borderColor = i === index ? 'var(--bleu)' : 'var(--border)';
+    img.style.borderWidth = i === index ? '2px' : '1.5px';
+  });
+}
+
+function ouvrirLightbox(index) {
+  if (!window.currentGallery || window.currentGallery.length === 0) return;
+  window.currentGalleryIndex = index;
+  document.getElementById('lightbox-img').src = window.currentGallery[index];
+  document.getElementById('lightbox-counter').textContent = `${index + 1} / ${window.currentGallery.length}`;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function fermerLightbox(event) {
+  if (event && event.target !== document.getElementById('lightbox') && !event.target.classList.contains('lightbox-close')) return;
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function lightboxNav(dir) {
+  if (!window.currentGallery) return;
+  window.currentGalleryIndex = (window.currentGalleryIndex + dir + window.currentGallery.length) % window.currentGallery.length;
+  document.getElementById('lightbox-img').src = window.currentGallery[window.currentGalleryIndex];
+  document.getElementById('lightbox-counter').textContent = `${window.currentGalleryIndex + 1} / ${window.currentGallery.length}`;
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'ArrowRight') lightboxNav(1);
+  if (e.key === 'ArrowLeft') lightboxNav(-1);
+  if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
+});
+
+// ── INIT ──
+async function init() {
+  const { data } = await db.auth.getSession();
+  if (data.session) {
+    currentUser = data.session.user;
+    mettreAJourNav();
+  }
+  chargerAccueilListings();
+}
+
+init();
+</script>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="fermerLightbox(event)">
+  <div class="lightbox-close" onclick="fermerLightbox()">×</div>
+  <img class="lightbox-img" id="lightbox-img" src="">
+  <div class="lightbox-nav">
+    <button class="lightbox-btn" onclick="lightboxNav(-1);event.stopPropagation()">‹</button>
+    <button class="lightbox-btn" onclick="lightboxNav(1);event.stopPropagation()">›</button>
+  </div>
+  <div class="lightbox-counter" id="lightbox-counter"></div>
+</div>
+
+</body>
+</html>
