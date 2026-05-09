@@ -1347,7 +1347,7 @@ async function chargerDashboard() {
         Number(a.kilometrage || 0).toLocaleString('fr-FR') + ' km · ' + a.localisation +
         ' ' + statutBadge + '</div></div>' +
         '<div class="dashboard-actions">' +
-        '<button class="btn btn-outline" onclick="voirDetail(' + a.id + ');showPage('detail')">Voir</button>' +
+        '<button class="btn btn-outline" onclick="voirDetail(' + a.id + ');showPage(\'detail\')">Voir</button>' +
         btnSupprimer + '</div></div>';
     }).join('');
   } catch(e) {
