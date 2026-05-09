@@ -397,6 +397,43 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
   font-size: 12px; font-weight: 600; color: var(--bleu);
 }
 
+/* ── MESSAGERIE ── */
+.messages-list { display: flex; flex-direction: column; gap: 12px; }
+.message-card {
+  background: var(--blanc);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+.message-card.unread { border-left: 4px solid var(--bleu); }
+.message-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.message-card-from { font-weight: 700; font-size: 14px; }
+.message-card-annonce { font-size: 12px; color: var(--texte-muted); margin-top: 2px; }
+.message-card-date { font-size: 12px; color: var(--texte-light); }
+.message-card-text { font-size: 14px; color: var(--texte-muted); line-height: 1.6; margin-bottom: 14px; }
+.message-thread { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 4px; }
+.message-reply { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.message-reply textarea {
+  background: var(--fond); border: 1.5px solid var(--border);
+  border-radius: 9px; padding: 10px 14px; font-family: 'Instrument Sans', sans-serif;
+  font-size: 14px; resize: none; height: 80px; outline: none; color: var(--texte);
+}
+.message-reply textarea:focus { border-color: var(--bleu); }
+.message-bubble {
+  padding: 10px 14px; border-radius: 10px; font-size: 13px; line-height: 1.5; max-width: 85%;
+}
+.message-bubble.received { background: var(--fond); border: 1px solid var(--border); align-self: flex-start; }
+.message-bubble.sent { background: var(--bleu-pale); border: 1px solid var(--bleu-mid); align-self: flex-end; color: var(--bleu); }
+.message-bubble-meta { font-size: 11px; color: var(--texte-light); margin-top: 4px; }
+.message-bubbles { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+/* Modal message */
+.modal-message-card {
+  background: var(--blanc); border-radius: 16px; padding: 32px;
+  width: 100%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
 /* ── MODAL SUPPRESSION ── */
 .modal-overlay {
   display: none;
@@ -709,7 +746,8 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
             <div><div style="font-size:13px;font-weight:600;color:var(--texte);">Score de transparence</div><div style="font-size:12px;color:var(--texte-muted);margin-top:2px;">Dossier complet</div></div>
           </div>
           <div class="sidebar-actions">
-            <button class="btn btn-primary btn-lg" style="justify-content:center;" onclick="contacterVendeur()">📞 Contacter le vendeur</button>
+            <button class="btn btn-primary btn-lg" style="justify-content:center;" onclick="ouvrirModalMessage()">💬 Envoyer un message</button>
+            <button class="btn btn-outline btn-lg" style="justify-content:center;" onclick="contacterVendeur()">📞 Appel direct</button>
             <button class="btn btn-outline btn-lg" style="justify-content:center;">💾 Sauvegarder</button>
           </div>
         </div>
@@ -873,13 +911,25 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     <div class="dashboard-header">
       <div>
         <div class="section-eyebrow">Mon espace</div>
-        <h2 class="section-title">Mes annonces</h2>
+        <h2 class="section-title">Mon espace</h2>
       </div>
       <a onclick="showPage('deposer')" class="btn btn-primary">+ Nouvelle annonce</a>
     </div>
+    <div class="annonce-tabs" style="margin-bottom:28px;">
+      <div class="annonce-tab active" onclick="switchDashboardTab(this,'annonces')">🚗 Mes annonces</div>
+      <div class="annonce-tab" id="messages-tab" onclick="switchDashboardTab(this,'messages')">💬 Messages <span id="messages-badge" style="display:none;background:var(--accent,#e84c1e);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;"></span></div>
+    </div>
     <div id="dashboard-alert"></div>
+    <div id="dtab-annonces" class="annonce-tab-content active">
     <div id="dashboard-annonces">
       <div class="loader"><div class="spinner"></div></div>
+    </div>
+    </div><!-- end dtab-annonces -->
+
+    <div id="dtab-messages" class="annonce-tab-content">
+      <div id="messages-container">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
     </div>
   </section>
 </div>
@@ -1200,6 +1250,124 @@ function ouvrirLightboxDefaut(url) {
   document.body.style.overflow = 'hidden';
 }
 
+// ── MESSAGERIE ──
+function ouvrirModalMessage() {
+  if (!currentAnnonce) return;
+  document.getElementById('modal-message-sub').textContent = 'Votre message sera transmis au vendeur de : ' + (currentAnnonce.marque || '') + ' ' + (currentAnnonce.modele || '') + '.';
+  document.getElementById('modal-message-alert').innerHTML = '';
+  document.getElementById('msg-prenom').value = '';
+  document.getElementById('msg-email').value = '';
+  document.getElementById('msg-texte').value = '';
+  document.getElementById('modal-message').classList.add('open');
+}
+
+function fermerModalMessage() {
+  document.getElementById('modal-message').classList.remove('open');
+}
+
+async function envoyerMessage() {
+  const prenom = document.getElementById('msg-prenom').value.trim();
+  const email = document.getElementById('msg-email').value.trim();
+  const texte = document.getElementById('msg-texte').value.trim();
+  const alertEl = document.getElementById('modal-message-alert');
+
+  if (!prenom || !email || !texte) {
+    alertEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:12px;">⚠️ Veuillez remplir tous les champs.</div>';
+    return;
+  }
+
+  try {
+    const { error } = await db.from('messages').insert([{
+      annonce_id: currentAnnonce.id,
+      vendeur_email: currentAnnonce.email,
+      acheteur_prenom: prenom,
+      acheteur_email: email,
+      texte: texte,
+      lu: false
+    }]);
+    if (error) throw error;
+    alertEl.innerHTML = '<div class="alert alert-success" style="margin-bottom:12px;">✅ Message envoyé ! Le vendeur vous répondra par email.</div>';
+    setTimeout(() => fermerModalMessage(), 2000);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:12px;">❌ Erreur : ' + e.message + '</div>';
+  }
+}
+
+async function chargerMessages() {
+  if (!currentUser) return;
+  const container = document.getElementById('messages-container');
+  container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  try {
+    const { data, error } = await db.from('messages')
+      .select('*, annonces(marque, modele)')
+      .eq('vendeur_email', currentUser.email)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    // Count unread
+    const unread = data ? data.filter(m => !m.lu).length : 0;
+    const badge = document.getElementById('messages-badge');
+    if (unread > 0) {
+      badge.style.display = 'inline';
+      badge.textContent = unread;
+    } else {
+      badge.style.display = 'none';
+    }
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><h3>Aucun message</h3><p>Les messages des acheteurs apparaîtront ici.</p></div>';
+      return;
+    }
+
+    container.innerHTML = '<div class="messages-list">' + data.map(m => {
+      const annonceTitre = m.annonces ? (m.annonces.marque + ' ' + m.annonces.modele) : 'Annonce supprimée';
+      const date = new Date(m.created_at).toLocaleDateString('fr-FR');
+      return '<div class="message-card ' + (!m.lu ? 'unread' : '') + '">' +
+        '<div class="message-card-header">' +
+        '<div><div class="message-card-from">✉️ ' + m.acheteur_prenom + '</div>' +
+        '<div class="message-card-annonce">Re: ' + annonceTitre + '</div></div>' +
+        '<div class="message-card-date">' + date + '</div></div>' +
+        '<div class="message-card-text">' + m.texte + '</div>' +
+        '<div class="message-thread">' +
+        '<div class="message-reply">' +
+        '<textarea id="reply-' + m.id + '" placeholder="Votre réponse..."></textarea>' +
+        '<button class="btn btn-primary" style="align-self:flex-end;" onclick="repondreMessage(' + m.id + ', '' + m.acheteur_email + '')">Répondre</button>' +
+        '</div></div></div>';
+    }).join('') + '</div>';
+
+    // Mark as read
+    const unreadIds = data.filter(m => !m.lu).map(m => m.id);
+    if (unreadIds.length > 0) {
+      await db.from('messages').update({ lu: true }).in('id', unreadIds);
+    }
+  } catch(e) {
+    container.innerHTML = '<div class="alert alert-error">Erreur de chargement des messages.</div>';
+  }
+}
+
+async function repondreMessage(messageId, acheteurEmail) {
+  const textarea = document.getElementById('reply-' + messageId);
+  const texte = textarea ? textarea.value.trim() : '';
+  if (!texte) return;
+  
+  try {
+    await db.from('messages').insert([{
+      annonce_id: null,
+      vendeur_email: acheteurEmail,
+      acheteur_prenom: 'Vendeur',
+      acheteur_email: currentUser.email,
+      texte: texte,
+      lu: false,
+      reply_to: messageId
+    }]);
+    textarea.value = '';
+    alert('Réponse envoyée !');
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+}
+
 // ── CONTACTER VENDEUR ──
 function contacterVendeur() {
   if (currentAnnonce && currentAnnonce.email) {
@@ -1434,6 +1602,19 @@ async function chargerDashboard() {
     }).join('');
   } catch(e) {
     container.innerHTML = `<div class="alert alert-error">Erreur de chargement.</div>`;
+  }
+}
+
+// ── SWITCH DASHBOARD TAB ──
+function switchDashboardTab(el, id) {
+  document.querySelectorAll('.dashboard-section .annonce-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.annonce-tab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (id === 'annonces') {
+    document.getElementById('dtab-annonces').classList.add('active');
+  } else {
+    document.getElementById('dtab-messages').classList.add('active');
+    chargerMessages();
   }
 }
 
@@ -1694,6 +1875,31 @@ async function init() {
 
 init();
 </script>
+
+<!-- MODAL MESSAGE -->
+<div class="modal-overlay" id="modal-message">
+  <div class="modal-message-card">
+    <div class="modal-title">💬 Envoyer un message</div>
+    <div class="modal-sub" id="modal-message-sub">Votre message sera transmis au vendeur. Il pourra vous répondre depuis son espace.</div>
+    <div id="modal-message-alert"></div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:600;">Votre prénom *</label>
+      <input type="text" id="msg-prenom" placeholder="Ex : Jean" style="background:var(--fond);border:1.5px solid var(--border);padding:11px 14px;border-radius:9px;font-size:14px;width:100%;outline:none;margin-top:6px;">
+    </div>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:600;">Votre email *</label>
+      <input type="email" id="msg-email" placeholder="votre@email.com" style="background:var(--fond);border:1.5px solid var(--border);padding:11px 14px;border-radius:9px;font-size:14px;width:100%;outline:none;margin-top:6px;">
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label style="font-size:13px;font-weight:600;">Votre message *</label>
+      <textarea id="msg-texte" placeholder="Ex : Bonjour, je suis intéressé par votre annonce. Est-ce que le véhicule est encore disponible ?" style="background:var(--fond);border:1.5px solid var(--border);padding:11px 14px;border-radius:9px;font-size:14px;width:100%;outline:none;resize:none;height:100px;margin-top:6px;font-family:'Instrument Sans',sans-serif;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="fermerModalMessage()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="envoyerMessage()">Envoyer 📨</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL SUPPRESSION -->
 <div class="modal-overlay" id="modal-suppression">
