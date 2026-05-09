@@ -1527,10 +1527,18 @@ function initOptions() {
   container.innerHTML = CATEGORIES_OPTIONS.map(cat => {
     const optionsHtml = cat.options.map(opt => {
       const safeOpt = opt.replace(/'/g, '&#39;');
-      return '<label class="option-checkbox" data-option="' + opt.toLowerCase() + '" onclick="toggleOption(this)"><input type="checkbox" value="' + safeOpt + '"><span>' + opt + '</span></label>';
+      return '<label class="option-checkbox" data-option="' + opt.toLowerCase() + '"><input type="checkbox" value="' + safeOpt + '"><span>' + opt + '</span></label>';
     }).join('');
     return '<div class="options-category"><div class="options-category-title">' + cat.icon + ' ' + cat.titre + '</div><div class="options-grid">' + optionsHtml + '</div></div>';
   }).join('') + '<div class="options-category"><div class="options-category-title">✏️ Autre option</div><div class="form-group"><input type="text" id="f-autre-option" placeholder="Ex : Coffre électrique, Pack Sport..." style="background:var(--blanc);border:1.5px solid var(--border);padding:11px 14px;border-radius:9px;font-size:14px;width:100%;outline:none;"></div></div>';
+
+  // Add click listeners after rendering
+  container.querySelectorAll('.option-checkbox').forEach(label => {
+    label.addEventListener('click', function(e) {
+      e.preventDefault();
+      toggleOption(this);
+    });
+  });
 }
 
 function toggleOption(label) {
