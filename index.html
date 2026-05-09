@@ -1332,7 +1332,7 @@ async function chargerMessages() {
         '<div class="message-thread">' +
         '<div class="message-reply">' +
         '<textarea id="reply-' + m.id + '" placeholder="Votre réponse..."></textarea>' +
-        '<button class="btn btn-primary" style="align-self:flex-end;" onclick="repondreMessage(' + m.id + ', '' + m.acheteur_email + '')">Répondre</button>' +
+        '<button class="btn btn-primary" style="align-self:flex-end;" onclick="repondreMessage(' + m.id + ', encodeURIComponent(\'' + m.acheteur_email + '\'))">Répondre</button>' +
         '</div></div></div>';
     }).join('') + '</div>';
 
@@ -1346,7 +1346,8 @@ async function chargerMessages() {
   }
 }
 
-async function repondreMessage(messageId, acheteurEmail) {
+async function repondreMessage(messageId, acheteurEmailEncoded) {
+  const acheteurEmail = decodeURIComponent(acheteurEmailEncoded);
   const textarea = document.getElementById('reply-' + messageId);
   const texte = textarea ? textarea.value.trim() : '';
   if (!texte) return;
