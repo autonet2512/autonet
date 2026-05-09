@@ -338,6 +338,80 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 .ct-ok { background: #ecfdf5; color: var(--vert); border: 1px solid #a7f3d0; }
 .ct-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
 
+/* ── MODAL SUPPRESSION ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9998;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--blanc);
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+}
+.modal-sub {
+  font-size: 14px;
+  color: var(--texte-muted);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.modal-option {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.modal-option:hover { border-color: var(--bleu); background: var(--bleu-pale); }
+.modal-option.selected { border-color: var(--bleu); background: var(--bleu-pale); }
+.modal-option-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-option-desc {
+  font-size: 12px;
+  color: var(--texte-muted);
+  line-height: 1.5;
+}
+.modal-option-desc strong { color: var(--texte); }
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.modal-warning {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #dc2626;
+  margin-bottom: 16px;
+  display: none;
+}
+
 /* ── LIGHTBOX ── */
 .lightbox {
   display: none;
@@ -804,7 +878,7 @@ async function chargerAccueilListings() {
   const container = document.getElementById('accueil-listings');
   container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   try {
-    const { data, error } = await db.from('annonces').select('*').order('created_at', { ascending: false }).limit(6);
+    const { data, error } = await db.from('annonces').select('*').in('statut', ['active', null]).order('created_at', { ascending: false }).limit(6);
     if (error) throw error;
     if (!data || data.length === 0) {
       container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🚗</div><h3>Aucune annonce pour l'instant</h3><p>Soyez le premier à publier !</p></div>`;
@@ -845,7 +919,7 @@ async function chargerAnnonces(params = {}) {
   const container = document.getElementById('annonces-listings');
   container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   try {
-    let query = db.from('annonces').select('*').order('created_at', { ascending: false });
+    let query = db.from('annonces').select('*').in('statut', ['active', null]).order('created_at', { ascending: false });
     if (params.marque) query = query.ilike('marque', `%${params.marque}%`);
     if (params.budget) query = query.lte('prix', params.budget);
     if (params.type) query = query.eq('type', params.type);
@@ -1254,19 +1328,92 @@ async function chargerDashboard() {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>Aucune annonce</h3><p>Publiez votre première annonce !</p></div>`;
       return;
     }
-    container.innerHTML = data.map(a => `
-      <div class="dashboard-annonce">
-        <div class="dashboard-annonce-info">
-          <div class="dashboard-annonce-title">${a.marque} ${a.modele} · ${a.annee}</div>
-          <div class="dashboard-annonce-sub">${Number(a.prix || 0).toLocaleString('fr-FR')} € · ${Number(a.kilometrage || 0).toLocaleString('fr-FR')} km · ${a.localisation}</div>
-        </div>
-        <div class="dashboard-actions">
-          <button class="btn btn-outline" onclick="voirDetail(${a.id});showPage('detail')">Voir</button>
-          <button class="btn btn-outline" style="color:var(--orange);border-color:var(--orange);" onclick="supprimerAnnonce(${a.id})">Supprimer</button>
-        </div>
-      </div>`).join('');
+    container.innerHTML = data.map(a => {
+      const estVendu = a.statut === 'vendu';
+      const estPending = a.statut === 'suppression_pending';
+      const statutBadge = estVendu
+        ? '<span style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">✅ Vendu — archivé 24 mois</span>'
+        : estPending
+        ? '<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">🕐 Suppression dans 15 jours</span>'
+        : '<span style="background:#EEF3FF;color:#1246C8;border:1px solid #dce6ff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">🟢 Active</span>';
+      const btnSupprimer = !estVendu
+        ? '<button class="btn btn-outline" style="color:#dc2626;border-color:#fecaca;" onclick="ouvrirModalSuppression(' + a.id + ')">Supprimer</button>'
+        : '';
+      return '<div class="dashboard-annonce">' +
+        '<div class="dashboard-annonce-info">' +
+        '<div class="dashboard-annonce-title">' + a.marque + ' ' + a.modele + ' · ' + a.annee + '</div>' +
+        '<div class="dashboard-annonce-sub" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+        Number(a.prix || 0).toLocaleString('fr-FR') + ' € · ' +
+        Number(a.kilometrage || 0).toLocaleString('fr-FR') + ' km · ' + a.localisation +
+        ' ' + statutBadge + '</div></div>' +
+        '<div class="dashboard-actions">' +
+        '<button class="btn btn-outline" onclick="voirDetail(' + a.id + ');showPage('detail')">Voir</button>' +
+        btnSupprimer + '</div></div>';
+    }).join('');
   } catch(e) {
     container.innerHTML = `<div class="alert alert-error">Erreur de chargement.</div>`;
+  }
+}
+
+// ── MODAL SUPPRESSION ──
+let annonceASupprimer = null;
+let optionSelectionnee = null;
+
+function ouvrirModalSuppression(id) {
+  annonceASupprimer = id;
+  optionSelectionnee = null;
+  document.getElementById('option-vendu').classList.remove('selected');
+  document.getElementById('option-simple').classList.remove('selected');
+  document.getElementById('modal-warning').style.display = 'none';
+  document.getElementById('modal-suppression').classList.add('open');
+}
+
+function fermerModal() {
+  document.getElementById('modal-suppression').classList.remove('open');
+  annonceASupprimer = null;
+  optionSelectionnee = null;
+}
+
+function selectionnerOption(option) {
+  optionSelectionnee = option;
+  document.getElementById('option-vendu').classList.toggle('selected', option === 'vendu');
+  document.getElementById('option-simple').classList.toggle('selected', option === 'simple');
+  document.getElementById('modal-warning').style.display = 'none';
+}
+
+async function confirmerSuppression() {
+  if (!optionSelectionnee) {
+    document.getElementById('modal-warning').style.display = 'block';
+    return;
+  }
+
+  try {
+    if (optionSelectionnee === 'vendu') {
+      // Archive for 24 months - mark as sold, cannot be deleted
+      const dateVente = new Date().toISOString();
+      const dateArchivage = new Date();
+      dateArchivage.setMonth(dateArchivage.getMonth() + 24);
+      const { error } = await db.from('annonces').update({
+        statut: 'vendu',
+        date_vente: dateVente,
+        date_archivage: dateArchivage.toISOString()
+      }).eq('id', annonceASupprimer);
+      if (error) throw error;
+    } else {
+      // Simple deletion - mark for deletion in 15 days
+      const dateSuppression = new Date();
+      dateSuppression.setDate(dateSuppression.getDate() + 15);
+      const { error } = await db.from('annonces').update({
+        statut: 'suppression_pending',
+        date_suppression: dateSuppression.toISOString()
+      }).eq('id', annonceASupprimer);
+      if (error) throw error;
+    }
+    fermerModal();
+    chargerDashboard();
+  } catch(e) {
+    document.getElementById('dashboard-alert').innerHTML = `<div class="alert alert-error">❌ Erreur : ${e.message}</div>`;
+    fermerModal();
   }
 }
 
@@ -1411,6 +1558,38 @@ async function init() {
 
 init();
 </script>
+
+<!-- MODAL SUPPRESSION -->
+<div class="modal-overlay" id="modal-suppression">
+  <div class="modal-card">
+    <div class="modal-title">🗑️ Supprimer l'annonce</div>
+    <div class="modal-sub">Choisissez la raison de la suppression avant de continuer.</div>
+    <div class="modal-warning" id="modal-warning">⚠️ Veuillez sélectionner une option.</div>
+
+    <div class="modal-option" id="option-vendu" onclick="selectionnerOption('vendu')">
+      <div class="modal-option-title">🎉 Véhicule vendu</div>
+      <div class="modal-option-desc">
+        Conformément à l'<strong>article 1641 du Code Civil</strong> sur les vices cachés, 
+        AutoNet conservera cette annonce pendant <strong>24 mois</strong> après la date de vente. 
+        Elle restera visible uniquement par vous et <strong>ne pourra pas être supprimée</strong>. 
+        Cela vous protège en cas de litige avec l'acheteur.
+      </div>
+    </div>
+
+    <div class="modal-option" id="option-simple" onclick="selectionnerOption('simple')">
+      <div class="modal-option-title">❌ Suppression simple</div>
+      <div class="modal-option-desc">
+        Le véhicule n'est pas vendu. L'annonce sera <strong>définitivement supprimée dans 15 jours</strong>. 
+        Cette option ne peut être utilisée que si le véhicule n'a pas été vendu.
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="fermerModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center;background:#dc2626;" onclick="confirmerSuppression()">Confirmer</button>
+    </div>
+  </div>
+</div>
 
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="fermerLightbox(event)">
