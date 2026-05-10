@@ -337,6 +337,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 }
 .ct-ok { background: #ecfdf5; color: var(--vert); border: 1px solid #a7f3d0; }
 .ct-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.ct-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 
 /* ── OPTIONS VÉHICULE ── */
 .options-section { margin-bottom: 28px; }
@@ -790,16 +791,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     </div>
     <div class="form-group"><label>Localisation (Ville) *</label><input type="text" id="f-localisation" placeholder="Ex : Lyon"></div>
     <div class="form-group"><label>Description</label><textarea id="f-description" placeholder="Décrivez votre véhicule : état général, options, historique..."></textarea></div>
-    <div class="form-section-title">📄 Certificat de Situation Administrative (CSA)</div>
-    <p style="font-size:13px;color:var(--texte-muted);margin-bottom:12px;">Le CSA prouve que le véhicule n'est pas volé, n'a pas de gage et peut être vendu librement. Optionnel mais fortement recommandé pour rassurer l'acheteur.</p>
-    <div style="background:var(--bleu-pale);border:1px solid var(--bleu-mid);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--bleu);margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-      <span style="font-size:20px;">💡</span>
-      <span>Obtenez votre CSA gratuitement en quelques clics sur <a href="https://histovec.interieur.gouv.fr" target="_blank" style="color:var(--bleu);font-weight:700;text-decoration:underline;">histovec.interieur.gouv.fr</a> — le site officiel du Ministère de l'Intérieur.</span>
-    </div>
-    <div class="form-group">
-      <label>Lien vers votre rapport Histovec (optionnel)</label>
-      <input type="url" id="f-histovec" placeholder="https://histovec.interieur.gouv.fr/...">
-    </div>
+
     <div class="form-section-title">📞 Vos coordonnées</div>
     <div class="form-grid">
       <div class="form-group"><label>Votre prénom *</label><input type="text" id="f-prenom" placeholder="Ex : Jean-Marie"></div>
@@ -876,6 +868,17 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       </div>
     </div>
     <button type="button" class="btn btn-outline" onclick="ajouterCT()" style="margin-bottom:24px;">+ Ajouter un CT</button>
+
+    <div class="form-section-title">📄 Certificat de Situation Administrative (CSA)</div>
+    <p style="font-size:13px;color:var(--texte-muted);margin-bottom:12px;">Le CSA prouve que le véhicule n'est pas volé, n'a pas de gage et peut être vendu librement. Optionnel mais fortement recommandé pour rassurer l'acheteur.</p>
+    <div style="background:var(--bleu-pale);border:1px solid var(--bleu-mid);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--bleu);margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+      <span style="font-size:20px;">💡</span>
+      <span>Obtenez votre CSA gratuitement sur <a href="https://histovec.interieur.gouv.fr" target="_blank" style="color:var(--bleu);font-weight:700;text-decoration:underline;">histovec.interieur.gouv.fr</a> — site officiel du Ministère de l'Intérieur.</span>
+    </div>
+    <div class="form-group">
+      <label>Uploader votre CSA (PDF ou photo, optionnel)</label>
+      <input type="file" id="f-csa" accept="image/*,application/pdf" style="background:var(--blanc);border:2px dashed var(--bleu);color:var(--texte);padding:16px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;width:100%;cursor:pointer;">
+    </div>
 
     <div class="form-section-title">⚙️ Options & Équipements</div>
     <p style="font-size:13px;color:var(--texte-muted);margin-bottom:16px;">Cochez toutes les options présentes sur votre véhicule.</p>
@@ -1192,6 +1195,7 @@ async function voirDetail(id) {
     document.getElementById('detail-prix').textContent = Number(data.prix || 0).toLocaleString('fr-FR') + ' €';
     document.getElementById('detail-description').textContent = data.description || '';
     chargerDefauts(id);
+    chargerCSA(id);
     chargerEntretien(id);
     chargerCT(id);
     document.getElementById('detail-vendeur').innerHTML = `${data.prenom || 'Vendeur'} · ${data.localisation || ''}<br><span style="color:var(--texte-light)">${data.email || ''}</span>${data.telephone ? `<br>${data.telephone}` : ''}`;
@@ -1236,7 +1240,6 @@ async function voirDetail(id) {
     }
 
     const telDisplay = data.masquer_tel ? '🔒 Masqué' : (data.telephone || '-');
-    const histovecHtml = data.histovec ? `<a href="${data.histovec}" target="_blank" style="color:var(--bleu);font-weight:600;">📄 Voir le rapport</a>` : '-';
     document.getElementById('detail-fiche').innerHTML = `
       <div class="fiche-item"><span class="fiche-key">Marque</span><span class="fiche-val">${data.marque || '-'}</span></div>
       <div class="fiche-item"><span class="fiche-key">Modèle</span><span class="fiche-val">${data.modele || '-'}</span></div>
@@ -1247,10 +1250,27 @@ async function voirDetail(id) {
       <div class="fiche-item"><span class="fiche-key">Prix</span><span class="fiche-val">${Number(data.prix || 0).toLocaleString('fr-FR')} €</span></div>
       <div class="fiche-item"><span class="fiche-key">Type</span><span class="fiche-val">${data.type || '-'}</span></div>
       <div class="fiche-item"><span class="fiche-key">Téléphone</span><span class="fiche-val">${telDisplay}</span></div>
-      <div class="fiche-item"><span class="fiche-key">CSA Histovec</span><span class="fiche-val">${histovecHtml}</span></div>
+      <div class="fiche-item" id="fiche-csa"><span class="fiche-key">CSA</span><span class="fiche-val">Chargement...</span></div>
     `;
   } catch(e) {
     console.error(e);
+  }
+}
+
+// ── CHARGER CSA ──
+async function chargerCSA(id) {
+  const ficheEl = document.getElementById('fiche-csa');
+  if (!ficheEl) return;
+  try {
+    const { data: files } = await db.storage.from('csa').list(String(id));
+    if (files && files.length > 0) {
+      const url = db.storage.from('csa').getPublicUrl(`${id}/${files[0].name}`).data.publicUrl;
+      ficheEl.innerHTML = '<span class="fiche-key">CSA</span><span class="fiche-val"><a href="' + url + '" target="_blank" style="color:var(--bleu);font-weight:600;">📄 Voir le CSA</a></span>';
+    } else {
+      ficheEl.innerHTML = '<span class="fiche-key">CSA</span><span class="fiche-val" style="color:var(--texte-light);">Non fourni</span>';
+    }
+  } catch(e) {
+    ficheEl.innerHTML = '<span class="fiche-key">CSA</span><span class="fiche-val" style="color:var(--texte-light);">Non fourni</span>';
   }
 }
 
@@ -1336,8 +1356,9 @@ async function chargerCT(id) {
 
     const ctHtml = data.map(ct => {
       const isOk = ct.resultat === 'Favorable';
-      const cls = isOk ? 'ct-ok' : 'ct-warning';
-      const icon = isOk ? '✅' : '⚠️';
+      const isMajeure = ct.resultat === 'Défaillance majeure';
+      const cls = isOk ? 'ct-ok' : isMajeure ? 'ct-danger' : 'ct-warning';
+      const icon = isOk ? '✅' : isMajeure ? '❌' : '⚠️';
       const rapportFile = rapportFiles.find(f => f.name.startsWith(String(ct.id)));
       let rapportHtml = '';
       if (rapportFile) {
@@ -1542,13 +1563,11 @@ async function publierAnnonce() {
   try {
     const optionsSelectionnees = getOptionsSelectionnees();
     const masquerTel = document.getElementById('f-masquer-tel') ? document.getElementById('f-masquer-tel').checked : false;
-    const histovec = document.getElementById('f-histovec') ? document.getElementById('f-histovec').value.trim() : '';
     const { data: annonce, error } = await db.from('annonces').insert([{
       marque, modele, annee: parseInt(annee), kilometrage: parseInt(km),
       prix: parseInt(prix), carburant, type, localisation, description,
       prenom, email, telephone: masquerTel ? null : telephone,
       masquer_tel: masquerTel,
-      histovec: histovec || null,
       options: optionsSelectionnees.length > 0 ? optionsSelectionnees.join('|') : null
     }]).select().single();
     if (error) throw error;
@@ -1619,6 +1638,14 @@ async function publierAnnonce() {
           await db.storage.from('rapports-ct').upload(`${annonce.id}/${ctRow.id}.${ext}`, rapportFile, { contentType: rapportFile.type });
         }
       }
+    }
+
+    // Upload CSA
+    const csaInput = document.getElementById('f-csa');
+    const csaFile = csaInput ? csaInput.files[0] : null;
+    if (csaFile && annonce) {
+      const ext = csaFile.name.split('.').pop();
+      await db.storage.from('csa').upload(`${annonce.id}/csa.${ext}`, csaFile, { contentType: csaFile.type, upsert: true });
     }
 
     alertEl.innerHTML = '<div class="alert alert-success">🎉 Votre annonce a été publiée avec succès !</div>';
