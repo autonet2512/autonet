@@ -790,15 +790,33 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     </div>
     <div class="form-group"><label>Localisation (Ville) *</label><input type="text" id="f-localisation" placeholder="Ex : Lyon"></div>
     <div class="form-group"><label>Description</label><textarea id="f-description" placeholder="Décrivez votre véhicule : état général, options, historique..."></textarea></div>
+    <div class="form-section-title">📄 Certificat de Situation Administrative (CSA)</div>
+    <p style="font-size:13px;color:var(--texte-muted);margin-bottom:12px;">Le CSA prouve que le véhicule n'est pas volé, n'a pas de gage et peut être vendu librement. Optionnel mais fortement recommandé pour rassurer l'acheteur.</p>
+    <div style="background:var(--bleu-pale);border:1px solid var(--bleu-mid);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--bleu);margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+      <span style="font-size:20px;">💡</span>
+      <span>Obtenez votre CSA gratuitement en quelques clics sur <a href="https://histovec.interieur.gouv.fr" target="_blank" style="color:var(--bleu);font-weight:700;text-decoration:underline;">histovec.interieur.gouv.fr</a> — le site officiel du Ministère de l'Intérieur.</span>
+    </div>
+    <div class="form-group">
+      <label>Lien vers votre rapport Histovec (optionnel)</label>
+      <input type="url" id="f-histovec" placeholder="https://histovec.interieur.gouv.fr/...">
+    </div>
     <div class="form-section-title">📞 Vos coordonnées</div>
     <div class="form-grid">
       <div class="form-group"><label>Votre prénom *</label><input type="text" id="f-prenom" placeholder="Ex : Jean-Marie"></div>
       <div class="form-group"><label>Votre email *</label><input type="email" id="f-email" placeholder="contact@email.com"></div>
     </div>
     <div class="form-group"><label>Votre téléphone</label><input type="tel" id="f-tel" placeholder="Ex : 06 12 34 56 78"></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--fond);border:1.5px solid var(--border);border-radius:9px;margin-bottom:4px;">
+      <input type="checkbox" id="f-masquer-tel" style="width:18px;height:18px;cursor:pointer;accent-color:var(--bleu);">
+      <label for="f-masquer-tel" style="font-size:14px;font-weight:500;cursor:pointer;">🔒 Ne pas afficher mon numéro de téléphone publiquement</label>
+    </div>
+    <p style="font-size:12px;color:var(--texte-light);margin-bottom:8px;">Si coché, les acheteurs devront vous contacter uniquement via la messagerie AutoNet.</p>
     <div class="form-section-title">📷 Photos du véhicule</div>
     <div class="form-group">
       <label>Ajoutez jusqu'à 10 photos *</label>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:10px;">
+        ⚠️ <strong>Conseil :</strong> Pensez à <strong>flouter ou cacher votre plaque d'immatriculation</strong> sur vos photos avant de les uploader. Cela évite tout risque d'usurpation d'identité.
+      </div>
       <input type="file" id="f-photos" accept="image/*" multiple onchange="previewPhotos(this)" style="background:var(--blanc);border:2px dashed var(--bleu);color:var(--texte);padding:20px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;width:100%;cursor:pointer;">
       <div id="photos-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
     </div>
@@ -1217,6 +1235,8 @@ async function voirDetail(id) {
       }
     }
 
+    const telDisplay = data.masquer_tel ? '🔒 Masqué' : (data.telephone || '-');
+    const histovecHtml = data.histovec ? `<a href="${data.histovec}" target="_blank" style="color:var(--bleu);font-weight:600;">📄 Voir le rapport</a>` : '-';
     document.getElementById('detail-fiche').innerHTML = `
       <div class="fiche-item"><span class="fiche-key">Marque</span><span class="fiche-val">${data.marque || '-'}</span></div>
       <div class="fiche-item"><span class="fiche-key">Modèle</span><span class="fiche-val">${data.modele || '-'}</span></div>
@@ -1226,6 +1246,8 @@ async function voirDetail(id) {
       <div class="fiche-item"><span class="fiche-key">Localisation</span><span class="fiche-val">${data.localisation || '-'}</span></div>
       <div class="fiche-item"><span class="fiche-key">Prix</span><span class="fiche-val">${Number(data.prix || 0).toLocaleString('fr-FR')} €</span></div>
       <div class="fiche-item"><span class="fiche-key">Type</span><span class="fiche-val">${data.type || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Téléphone</span><span class="fiche-val">${telDisplay}</span></div>
+      <div class="fiche-item"><span class="fiche-key">CSA Histovec</span><span class="fiche-val">${histovecHtml}</span></div>
     `;
   } catch(e) {
     console.error(e);
@@ -1519,10 +1541,14 @@ async function publierAnnonce() {
 
   try {
     const optionsSelectionnees = getOptionsSelectionnees();
+    const masquerTel = document.getElementById('f-masquer-tel') ? document.getElementById('f-masquer-tel').checked : false;
+    const histovec = document.getElementById('f-histovec') ? document.getElementById('f-histovec').value.trim() : '';
     const { data: annonce, error } = await db.from('annonces').insert([{
       marque, modele, annee: parseInt(annee), kilometrage: parseInt(km),
       prix: parseInt(prix), carburant, type, localisation, description,
-      prenom, email, telephone,
+      prenom, email, telephone: masquerTel ? null : telephone,
+      masquer_tel: masquerTel,
+      histovec: histovec || null,
       options: optionsSelectionnees.length > 0 ? optionsSelectionnees.join('|') : null
     }]).select().single();
     if (error) throw error;
