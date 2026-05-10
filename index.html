@@ -686,6 +686,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           <div class="annonce-tab" onclick="switchAnnoncTab(this,'defauts')">🔍 État carrosserie</div>
           <div class="annonce-tab" onclick="switchAnnoncTab(this,'entretien')">🔧 Entretien</div>
           <div class="annonce-tab" onclick="switchAnnoncTab(this,'ct')">✅ Contrôle technique</div>
+          <div class="annonce-tab" onclick="switchAnnoncTab(this,'csa')">📄 CSA</div>
         </div>
 
         <!-- FICHE -->
@@ -737,6 +738,23 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
               <h3>Aucun CT renseigné</h3>
               <p>Le vendeur n'a pas encore ajouté les contrôles techniques.</p>
             </div>
+          </div>
+        </div>
+
+        <!-- CSA -->
+        <div class="annonce-tab-content" id="atab-csa">
+          <p style="font-size:14px;color:var(--texte-muted);margin-bottom:16px;line-height:1.6;">
+            Le Certificat de Situation Administrative prouve que le véhicule n'est pas volé et peut être vendu librement.
+          </p>
+          <div id="detail-csa-content">
+            <div class="empty-state" style="padding:40px;">
+              <div class="empty-icon">📄</div>
+              <h3>Aucun CSA fourni</h3>
+              <p>Le vendeur n'a pas joint de Certificat de Situation Administrative.</p>
+            </div>
+          </div>
+          <div style="margin-top:20px;background:var(--bleu-pale);border:1px solid var(--bleu-mid);border-radius:10px;padding:14px 18px;font-size:13px;color:var(--bleu);">
+            💡 Vous pouvez vérifier gratuitement l'historique du véhicule sur <a href="https://histovec.interieur.gouv.fr" target="_blank" style="color:var(--bleu);font-weight:700;text-decoration:underline;">histovec.interieur.gouv.fr</a>
           </div>
         </div>
       </div>
@@ -1250,7 +1268,7 @@ async function voirDetail(id) {
       <div class="fiche-item"><span class="fiche-key">Prix</span><span class="fiche-val">${Number(data.prix || 0).toLocaleString('fr-FR')} €</span></div>
       <div class="fiche-item"><span class="fiche-key">Type</span><span class="fiche-val">${data.type || '-'}</span></div>
       <div class="fiche-item"><span class="fiche-key">Téléphone</span><span class="fiche-val">${telDisplay}</span></div>
-      <div class="fiche-item" id="fiche-csa"><span class="fiche-key">CSA</span><span class="fiche-val">Chargement...</span></div>
+
     `;
   } catch(e) {
     console.error(e);
@@ -1259,19 +1277,23 @@ async function voirDetail(id) {
 
 // ── CHARGER CSA ──
 async function chargerCSA(id) {
-  const ficheEl = document.getElementById('fiche-csa');
-  if (!ficheEl) return;
+  const container = document.getElementById('detail-csa-content');
+  if (!container) return;
   try {
     const { data: files } = await db.storage.from('csa').list(String(id));
     if (files && files.length > 0) {
-      const url = db.storage.from('csa').getPublicUrl(`${id}/${files[0].name}`).data.publicUrl;
-      ficheEl.innerHTML = '<span class="fiche-key">CSA</span><span class="fiche-val"><a href="' + url + '" target="_blank" style="color:var(--bleu);font-weight:600;">📄 Voir le CSA</a></span>';
-    } else {
-      ficheEl.innerHTML = '<span class="fiche-key">CSA</span><span class="fiche-val" style="color:var(--texte-light);">Non fourni</span>';
+      const validFiles = files.filter(f => f.name && !f.name.startsWith('.'));
+      if (validFiles.length > 0) {
+        const url = db.storage.from('csa').getPublicUrl(`${id}/${validFiles[0].name}`).data.publicUrl;
+        const ext = validFiles[0].name.split('.').pop().toLowerCase();
+        const isPdf = ext === 'pdf';
+        container.innerHTML = '<div style="background:var(--fond);border:1.5px solid var(--border);border-radius:12px;padding:24px;display:flex;align-items:center;gap:16px;">' +
+          '<div style="font-size:36px;">' + (isPdf ? '📋' : '🖼️') + '</div>' +
+          '<div><div style="font-weight:700;font-size:15px;margin-bottom:6px;">CSA disponible</div>' +
+          '<a href="' + url + '" target="_blank" class="btn btn-primary" style="font-size:13px;padding:8px 18px;">📄 Voir le CSA</a></div></div>';
+      }
     }
-  } catch(e) {
-    ficheEl.innerHTML = '<span class="fiche-key">CSA</span><span class="fiche-val" style="color:var(--texte-light);">Non fourni</span>';
-  }
+  } catch(e) { console.error('CSA error:', e); }
 }
 
 // ── CHARGER DÉFAUTS ──
