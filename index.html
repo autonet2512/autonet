@@ -1460,43 +1460,125 @@ async function chargerMessages() {
   const container = document.getElementById('messages-container');
   container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   try {
+    // Get all messages where current user is vendeur - only root messages (not replies)
     const { data, error } = await db.from('messages')
       .select('*, annonces(marque, modele)')
       .eq('vendeur_email', currentUser.email)
+      .is('reply_to', null)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     // Count unread
     const unread = data ? data.filter(m => !m.lu).length : 0;
     const badge = document.getElementById('messages-badge');
-    if (unread > 0) {
-      badge.style.display = 'inline';
-      badge.textContent = unread;
-    } else {
-      badge.style.display = 'none';
-    }
+    if (unread > 0) { badge.style.display = 'inline'; badge.textContent = unread; }
+    else { badge.style.display = 'none'; }
 
     if (!data || data.length === 0) {
       container.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><h3>Aucun message</h3><p>Les messages des acheteurs apparaîtront ici.</p></div>';
       return;
     }
 
-    container.innerHTML = '<div class="messages-list">' + data.map(m => {
+    // For each root message, get replies
+    const threads = [];
+    for (const m of data) {
+      const { data: replies } = await db.from('messages')
+        .select('*')
+        .eq('reply_to', m.id)
+        .order('created_at', { ascending: true });
+      threads.push({ root: m, replies: replies || [] });
+    }
+
+    // Build HTML using DOM to avoid quote issues
+    const listDiv = document.createElement('div');
+    listDiv.className = 'messages-list';
+
+    for (const t of threads) {
+      const m = t.root;
       const annonceTitre = m.annonces ? (m.annonces.marque + ' ' + m.annonces.modele) : 'Annonce supprimée';
       const date = new Date(m.created_at).toLocaleDateString('fr-FR');
-      return '<div class="message-card ' + (!m.lu ? 'unread' : '') + '">' +
-        '<div class="message-card-header">' +
-        '<div><div class="message-card-from">✉️ ' + m.acheteur_prenom + '</div>' +
-        '<div class="message-card-annonce">Re: ' + annonceTitre + '</div></div>' +
-        '<div class="message-card-date">' + date + '</div></div>' +
-        '<div class="message-card-text">' + m.texte + '</div>' +
-        '<div class="message-thread">' +
-        '<div class="message-reply">' +
-        '<textarea id="reply-' + m.id + '" placeholder="Votre réponse..."></textarea>' +
-        '<button class="btn btn-primary" style="align-self:flex-end;" onclick="repondreMessage(' + m.id + ', encodeURIComponent(\'' + m.acheteur_email + '\'))">Répondre</button>' +
-        '</div></div></div>';
-    }).join('') + '</div>';
+
+      const card = document.createElement('div');
+      card.className = 'message-card' + (!m.lu ? ' unread' : '');
+      card.id = 'msg-card-' + m.id;
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'message-card-header';
+      header.innerHTML = '<div><div class="message-card-from">💬 ' + m.acheteur_prenom + '</div><div class="message-card-annonce">Re: ' + annonceTitre + '</div></div>';
+      
+      const headerRight = document.createElement('div');
+      headerRight.style.cssText = 'display:flex;align-items:center;gap:10px;';
+      const dateEl = document.createElement('div');
+      dateEl.className = 'message-card-date';
+      dateEl.textContent = date;
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '🗑️';
+      delBtn.title = 'Supprimer la conversation';
+      delBtn.style.cssText = 'background:none;border:none;color:var(--texte-light);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;';
+      delBtn.addEventListener('click', () => supprimerConversation(m.id));
+      headerRight.appendChild(dateEl);
+      headerRight.appendChild(delBtn);
+      header.appendChild(headerRight);
+      card.appendChild(header);
+
+      // Bubbles
+      const bubblesDiv = document.createElement('div');
+      bubblesDiv.className = 'message-bubbles';
+
+      // Root message
+      const rootDiv = document.createElement('div');
+      const rootBubble = document.createElement('div');
+      rootBubble.className = 'message-bubble received';
+      rootBubble.textContent = m.texte;
+      const rootMeta = document.createElement('div');
+      rootMeta.className = 'message-bubble-meta';
+      rootMeta.textContent = m.acheteur_prenom + ' · ' + date;
+      rootDiv.appendChild(rootBubble);
+      rootDiv.appendChild(rootMeta);
+      bubblesDiv.appendChild(rootDiv);
+
+      // Replies
+      for (const r of t.replies) {
+        const rDate = new Date(r.created_at).toLocaleDateString('fr-FR');
+        const isMine = r.acheteur_email === currentUser.email;
+        const rWrap = document.createElement('div');
+        rWrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isMine ? 'flex-end' : 'flex-start') + ';';
+        const rBubble = document.createElement('div');
+        rBubble.className = 'message-bubble ' + (isMine ? 'sent' : 'received');
+        rBubble.textContent = r.texte;
+        const rMeta = document.createElement('div');
+        rMeta.className = 'message-bubble-meta';
+        rMeta.textContent = (isMine ? 'Vous' : r.acheteur_prenom) + ' · ' + rDate;
+        rWrap.appendChild(rBubble);
+        rWrap.appendChild(rMeta);
+        bubblesDiv.appendChild(rWrap);
+      }
+      card.appendChild(bubblesDiv);
+
+      // Reply area
+      const thread = document.createElement('div');
+      thread.className = 'message-thread';
+      const replyDiv = document.createElement('div');
+      replyDiv.className = 'message-reply';
+      const textarea = document.createElement('textarea');
+      textarea.id = 'reply-' + m.id;
+      textarea.placeholder = 'Votre réponse...';
+      const sendBtn = document.createElement('button');
+      sendBtn.className = 'btn btn-primary';
+      sendBtn.style.cssText = 'align-self:flex-end;padding:8px 18px;';
+      sendBtn.textContent = 'Envoyer ↗';
+      sendBtn.addEventListener('click', () => repondreMessage(m.id));
+      replyDiv.appendChild(textarea);
+      replyDiv.appendChild(sendBtn);
+      thread.appendChild(replyDiv);
+      card.appendChild(thread);
+
+      listDiv.appendChild(card);
+    }
+    container.innerHTML = '';
+    container.appendChild(listDiv);
 
     // Mark as read
     const unreadIds = data.filter(m => !m.lu).map(m => m.id);
@@ -1504,28 +1586,46 @@ async function chargerMessages() {
       await db.from('messages').update({ lu: true }).in('id', unreadIds);
     }
   } catch(e) {
-    container.innerHTML = '<div class="alert alert-error">Erreur de chargement des messages.</div>';
+    container.innerHTML = '<div class="alert alert-error">Erreur : ' + e.message + '</div>';
   }
 }
 
-async function repondreMessage(messageId, acheteurEmailEncoded) {
-  const acheteurEmail = decodeURIComponent(acheteurEmailEncoded);
-  const textarea = document.getElementById('reply-' + messageId);
+async function repondreMessage(rootMessageId) {
+  const textarea = document.getElementById('reply-' + rootMessageId);
   const texte = textarea ? textarea.value.trim() : '';
-  if (!texte) return;
-  
+  if (!texte) { alert('Veuillez saisir une réponse.'); return; }
+
+  // Get root message to find buyer email
   try {
+    const { data: rootMsg } = await db.from('messages').select('acheteur_email, acheteur_prenom, annonce_id').eq('id', rootMessageId).single();
+    if (!rootMsg) throw new Error('Message introuvable');
+
     await db.from('messages').insert([{
-      annonce_id: null,
-      vendeur_email: acheteurEmail,
+      annonce_id: rootMsg.annonce_id,
+      vendeur_email: rootMsg.acheteur_email,
       acheteur_prenom: 'Vendeur',
       acheteur_email: currentUser.email,
       texte: texte,
       lu: false,
-      reply_to: messageId
+      reply_to: rootMessageId
     }]);
     textarea.value = '';
-    alert('Réponse envoyée !');
+    chargerMessages(); // Refresh to show new reply
+  } catch(e) {
+    alert('Erreur : ' + e.message);
+  }
+}
+
+async function supprimerConversation(rootMessageId) {
+  if (!confirm('Supprimer cette conversation ? Cette action est irréversible.')) return;
+  try {
+    // Delete replies first
+    await db.from('messages').delete().eq('reply_to', rootMessageId);
+    // Delete root message
+    await db.from('messages').delete().eq('id', rootMessageId);
+    // Remove card from DOM
+    const card = document.getElementById('msg-card-' + rootMessageId);
+    if (card) card.remove();
   } catch(e) {
     alert('Erreur : ' + e.message);
   }
