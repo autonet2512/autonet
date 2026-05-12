@@ -6,6 +6,7 @@
 <title>AutoNet — L'annonce automobile sans surprise</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root {
   --bleu: #1246C8;
@@ -1448,6 +1449,9 @@ async function envoyerMessage() {
       lu: false
     }]);
     if (error) throw error;
+    // Notify vendor by email
+    const annonceTitre = (currentAnnonce.marque || '') + ' ' + (currentAnnonce.modele || '');
+    await envoyerNotifEmail(currentAnnonce.email, 'Vendeur', prenom, annonceTitre, texte);
     alertEl.innerHTML = '<div class="alert alert-success" style="margin-bottom:12px;">✅ Message envoyé ! Le vendeur vous répondra par email.</div>';
     setTimeout(() => fermerModalMessage(), 2000);
   } catch(e) {
@@ -1609,6 +1613,10 @@ async function repondreMessage(rootMessageId) {
       lu: false,
       reply_to: rootMessageId
     }]);
+    // Notify buyer by email
+    const { data: annonceInfo } = await db.from('annonces').select('marque, modele').eq('id', rootMsg.annonce_id).single();
+    const annonceTitre = annonceInfo ? (annonceInfo.marque + ' ' + annonceInfo.modele) : 'AutoNet';
+    await envoyerNotifEmail(rootMsg.acheteur_email, rootMsg.acheteur_prenom, 'Le vendeur', annonceTitre, texte);
     textarea.value = '';
     chargerMessages(); // Refresh to show new reply
   } catch(e) {
@@ -2136,8 +2144,33 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
 
+// ── EMAILJS ──
+const EMAILJS_PUBLIC_KEY = 'atruVA6-nMIv2vlzl';
+const EMAILJS_SERVICE_ID = 'service_h3e59yn';
+const EMAILJS_TEMPLATE_ID = 'template_d8tqg5s';
+
+function initEmailJS() {
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
+async function envoyerNotifEmail(destinataireEmail, destinatairePrenom, expediteurPrenom, annonceTitre, messageTexte) {
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      destinataire_prenom: destinatairePrenom,
+      annonce_titre: annonceTitre,
+      expediteur_prenom: expediteurPrenom,
+      message_texte: messageTexte,
+      to_email: destinataireEmail
+    });
+    console.log('Email envoyé à', destinataireEmail);
+  } catch(e) {
+    console.error('EmailJS error:', e);
+  }
+}
+
 // ── INIT ──
 async function init() {
+  initEmailJS();
   const { data } = await db.auth.getSession();
   if (data.session) {
     currentUser = data.session.user;
