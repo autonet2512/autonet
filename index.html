@@ -770,7 +770,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           <div class="sidebar-actions">
             <button class="btn btn-primary btn-lg" style="justify-content:center;" onclick="ouvrirModalMessage()">💬 Envoyer un message</button>
             <button class="btn btn-outline btn-lg" style="justify-content:center;" onclick="contacterVendeur()">📞 Appel direct</button>
-            <button class="btn btn-outline btn-lg" style="justify-content:center;">💾 Sauvegarder</button>
+            <button class="btn btn-outline btn-lg" style="justify-content:center;" id="btn-save-detail" onclick="toggleSauvegardeDetail()">🤍 Sauvegarder</button>
           </div>
         </div>
         <div class="sidebar-card" style="font-size:13px;color:var(--texte-muted);line-height:1.7;">
@@ -1055,6 +1055,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     <div class="annonce-tabs" style="margin-bottom:28px;">
       <div class="annonce-tab active" onclick="switchDashboardTab(this,'annonces')">🚗 Mes annonces</div>
       <div class="annonce-tab" id="messages-tab" onclick="switchDashboardTab(this,'messages')">💬 Messages <span id="messages-badge" style="display:none;background:var(--accent,#e84c1e);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;"></span></div>
+      <div class="annonce-tab" onclick="switchDashboardTab(this,'saved')">❤️ Sauvegardées</div>
     </div>
     <div id="dashboard-alert"></div>
     <div id="dtab-annonces" class="annonce-tab-content active">
@@ -1062,6 +1063,12 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <div class="loader"><div class="spinner"></div></div>
     </div>
     </div><!-- end dtab-annonces -->
+
+    <div id="dtab-saved" class="annonce-tab-content">
+      <div id="saved-annonces">
+        <div class="loader"><div class="spinner"></div></div>
+      </div>
+    </div>
 
     <div id="dtab-messages" class="annonce-tab-content">
       <div id="messages-container">
@@ -1123,7 +1130,10 @@ function renderCard(a) {
         </div>
         <div class="listing-footer">
           <div class="listing-price">${Number(a.prix || 0).toLocaleString('fr-FR')} € <span>net vendeur</span></div>
-          <div class="listing-loc">📍 ${a.localisation || ''}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="listing-loc">📍 ${a.localisation || ''}</div>
+            <button onclick="event.stopPropagation();toggleSauvegarde(${a.id},this)" class="btn-save" data-id="${a.id}" style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;" title="Sauvegarder">🤍</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -1142,6 +1152,7 @@ async function chargerAccueilListings() {
     }
     container.innerHTML = data.map(renderCard).join('');
     setTimeout(() => chargerPhotosCards(data, 'page-accueil'), 100);
+    setTimeout(mettreAJourBoutonsSauvegarde, 300);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement. Vérifiez vos clés Supabase.</p></div>`;
   }
@@ -1188,6 +1199,7 @@ async function chargerAnnonces(params = {}) {
     document.getElementById('annonces-titre').textContent = `${data.length} véhicule${data.length > 1 ? 's' : ''} disponible${data.length > 1 ? 's' : ''}`;
     container.innerHTML = data.map(renderCard).join('');
     setTimeout(() => chargerPhotosCards(data, 'page-annonces'), 100);
+    setTimeout(mettreAJourBoutonsSauvegarde, 300);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement.</p></div>`;
   }
@@ -1921,6 +1933,9 @@ function switchDashboardTab(el, id) {
   el.classList.add('active');
   if (id === 'annonces') {
     document.getElementById('dtab-annonces').classList.add('active');
+  } else if (id === 'saved') {
+    document.getElementById('dtab-saved').classList.add('active');
+    chargerSauvegardees();
   } else {
     document.getElementById('dtab-messages').classList.add('active');
     chargerMessages();
@@ -2171,6 +2186,104 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') lightboxNav(-1);
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
+
+// ── SAUVEGARDÉES ──
+async function toggleSauvegarde(annonceId, btn) {
+  if (!currentUser) { showPage('connexion'); return; }
+  
+  // Check if already saved
+  const { data: existing } = await db.from('sauvegardes')
+    .select('id')
+    .eq('user_email', currentUser.email)
+    .eq('annonce_id', annonceId)
+    .single().catch(() => ({ data: null }));
+
+  if (existing) {
+    // Unsave
+    await db.from('sauvegardes').delete().eq('id', existing.id);
+    if (btn) btn.textContent = '🤍';
+  } else {
+    // Save
+    await db.from('sauvegardes').insert([{ user_email: currentUser.email, annonce_id: annonceId }]);
+    if (btn) btn.textContent = '❤️';
+  }
+}
+
+async function toggleSauvegardeDetail() {
+  if (!currentAnnonce) return;
+  const btn = document.getElementById('btn-save-detail');
+  await toggleSauvegarde(currentAnnonce.id, btn);
+}
+
+async function chargerSauvegardees() {
+  if (!currentUser) return;
+  const container = document.getElementById('saved-annonces');
+  container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  try {
+    const { data, error } = await db.from('sauvegardes')
+      .select('*, annonces(*)')
+      .eq('user_email', currentUser.email)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">❤️</div><h3>Aucune annonce sauvegardée</h3><p>Cliquez sur 🤍 sur une annonce pour la sauvegarder.</p></div>';
+      return;
+    }
+
+    const annonces = data.map(s => s.annonces).filter(Boolean);
+    const savedIds = data.map(s => s.annonce_id);
+
+    // Build grid with unsave button
+    const gridDiv = document.createElement('div');
+    gridDiv.className = 'listings-grid';
+
+    data.forEach((s, i) => {
+      const a = s.annonces;
+      if (!a) return;
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:relative;';
+      wrapper.innerHTML = renderCard(a);
+
+      // Add unsave button overlay
+      const unsaveBtn = document.createElement('button');
+      unsaveBtn.textContent = '❤️ Retirer';
+      unsaveBtn.style.cssText = 'position:absolute;top:10px;right:10px;background:rgba(220,38,38,0.9);color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;z-index:10;';
+      unsaveBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await db.from('sauvegardes').delete().eq('id', s.id);
+        wrapper.remove();
+        // If no more saved
+        if (gridDiv.children.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-icon">❤️</div><h3>Aucune annonce sauvegardée</h3><p>Cliquez sur 🤍 sur une annonce pour la sauvegarder.</p></div>';
+        }
+      });
+      wrapper.appendChild(unsaveBtn);
+      gridDiv.appendChild(wrapper);
+    });
+
+    container.innerHTML = '';
+    container.appendChild(gridDiv);
+    setTimeout(() => chargerPhotosCards(annonces, 'dtab-saved'), 100);
+  } catch(e) {
+    container.innerHTML = '<div class="alert alert-error">Erreur de chargement.</div>';
+  }
+}
+
+async function mettreAJourBoutonsSauvegarde() {
+  if (!currentUser) return;
+  try {
+    const { data } = await db.from('sauvegardes')
+      .select('annonce_id')
+      .eq('user_email', currentUser.email);
+    if (!data) return;
+    const savedIds = data.map(s => s.annonce_id);
+    document.querySelectorAll('.btn-save').forEach(btn => {
+      const id = parseInt(btn.dataset.id);
+      if (savedIds.includes(id)) btn.textContent = '❤️';
+    });
+  } catch(e) {}
+}
 
 // ── EMAILJS ──
 const EMAILJS_PUBLIC_KEY = 'atruVA6-nMIv2vlzl';
