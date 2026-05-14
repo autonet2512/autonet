@@ -1418,8 +1418,8 @@ function ouvrirModalMessage() {
   if (!currentAnnonce) return;
   document.getElementById('modal-message-sub').textContent = 'Votre message sera transmis au vendeur de : ' + (currentAnnonce.marque || '') + ' ' + (currentAnnonce.modele || '') + '.';
   document.getElementById('modal-message-alert').innerHTML = '';
-  document.getElementById('msg-prenom').value = '';
-  document.getElementById('msg-email').value = '';
+  document.getElementById('msg-prenom').value = currentUser ? (currentUser.user_metadata?.prenom || '') : '';
+  document.getElementById('msg-email').value = currentUser ? currentUser.email : '';
   document.getElementById('msg-texte').value = '';
   document.getElementById('modal-message').classList.add('open');
 }
@@ -1440,11 +1440,14 @@ async function envoyerMessage() {
   }
 
   try {
+    // Use logged-in email if available for better conversation tracking
+    const finalEmail = (currentUser && currentUser.email) ? currentUser.email : email;
+    const finalPrenom = (currentUser && currentUser.email) ? (prenom || 'Acheteur') : prenom;
     const { error } = await db.from('messages').insert([{
       annonce_id: currentAnnonce.id,
       vendeur_email: currentAnnonce.email,
-      acheteur_prenom: prenom,
-      acheteur_email: email,
+      acheteur_prenom: finalPrenom,
+      acheteur_email: finalEmail,
       texte: texte,
       lu: false
     }]);
