@@ -1464,17 +1464,37 @@ async function chargerMessages() {
   const container = document.getElementById('messages-container');
   container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   try {
-    // Get all messages where current user is vendeur - only root messages (not replies)
-    const { data, error } = await db.from('messages')
+    // Get messages where user is vendeur OR acheteur - only root messages
+    const { data: received, error: e1 } = await db.from('messages')
       .select('*, annonces(marque, modele)')
       .eq('vendeur_email', currentUser.email)
       .is('reply_to', null)
       .order('created_at', { ascending: false });
 
+    const { data: sent, error: e2 } = await db.from('messages')
+      .select('*, annonces(marque, modele)')
+      .eq('acheteur_email', currentUser.email)
+      .is('reply_to', null)
+      .order('created_at', { ascending: false });
+
+    const error = e1 || e2;
+    // Merge and deduplicate
+    const allMessages = [...(received || []), ...(sent || [])];
+    const seen = new Set();
+    const data = allMessages.filter(m => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
     if (error) throw error;
 
-    // Count unread
-    const unread = data ? data.filter(m => !m.lu).length : 0;
+    // Count unread - messages where I am the recipient and haven't read
+    const unread = data ? data.filter(m => {
+      // Unread for vendor: messages sent to me as vendor
+      if (m.vendeur_email === currentUser.email && !m.lu) return true;
+      return false;
+    }).length : 0;
     const badge = document.getElementById('messages-badge');
     if (unread > 0) { badge.style.display = 'inline'; badge.textContent = unread; }
     else { badge.style.display = 'none'; }
