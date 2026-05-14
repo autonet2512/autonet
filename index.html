@@ -1551,14 +1551,17 @@ async function chargerMessages() {
       const bubblesDiv = document.createElement('div');
       bubblesDiv.className = 'message-bubbles';
 
-      // Root message
+      // Root message - sent by buyer (acheteur_email)
+      const rootIsMine = m.acheteur_email === currentUser.email;
       const rootDiv = document.createElement('div');
+      rootDiv.style.cssText = 'display:flex;flex-direction:column;align-items:' + (rootIsMine ? 'flex-end' : 'flex-start') + ';margin-bottom:4px;';
       const rootBubble = document.createElement('div');
-      rootBubble.className = 'message-bubble received';
+      rootBubble.className = 'message-bubble ' + (rootIsMine ? 'sent' : 'received');
       rootBubble.textContent = m.texte;
       const rootMeta = document.createElement('div');
       rootMeta.className = 'message-bubble-meta';
-      rootMeta.textContent = m.acheteur_prenom + ' · ' + date;
+      rootMeta.style.textAlign = rootIsMine ? 'right' : 'left';
+      rootMeta.textContent = (rootIsMine ? 'Vous' : m.acheteur_prenom) + ' · ' + date;
       rootDiv.appendChild(rootBubble);
       rootDiv.appendChild(rootMeta);
       bubblesDiv.appendChild(rootDiv);
@@ -1566,14 +1569,16 @@ async function chargerMessages() {
       // Replies
       for (const r of t.replies) {
         const rDate = new Date(r.created_at).toLocaleDateString('fr-FR');
+        // isMine = this reply was sent by current user
         const isMine = r.acheteur_email === currentUser.email;
         const rWrap = document.createElement('div');
-        rWrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isMine ? 'flex-end' : 'flex-start') + ';';
+        rWrap.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isMine ? 'flex-end' : 'flex-start') + ';margin-bottom:4px;';
         const rBubble = document.createElement('div');
         rBubble.className = 'message-bubble ' + (isMine ? 'sent' : 'received');
         rBubble.textContent = r.texte;
         const rMeta = document.createElement('div');
         rMeta.className = 'message-bubble-meta';
+        rMeta.style.textAlign = isMine ? 'right' : 'left';
         rMeta.textContent = (isMine ? 'Vous' : r.acheteur_prenom) + ' · ' + rDate;
         rWrap.appendChild(rBubble);
         rWrap.appendChild(rMeta);
