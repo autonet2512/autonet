@@ -2191,21 +2191,25 @@ document.addEventListener('keydown', e => {
 async function toggleSauvegarde(annonceId, btn) {
   if (!currentUser) { showPage('connexion'); return; }
   
-  // Check if already saved
-  const { data: existing } = await db.from('sauvegardes')
-    .select('id')
-    .eq('user_email', currentUser.email)
-    .eq('annonce_id', annonceId)
-    .single().catch(() => ({ data: null }));
+  try {
+    // Check if already saved
+    const { data: existing, error } = await db.from('sauvegardes')
+      .select('id')
+      .eq('user_email', currentUser.email)
+      .eq('annonce_id', annonceId)
+      .maybeSingle();
 
-  if (existing) {
-    // Unsave
-    await db.from('sauvegardes').delete().eq('id', existing.id);
-    if (btn) btn.textContent = '🤍';
-  } else {
-    // Save
-    await db.from('sauvegardes').insert([{ user_email: currentUser.email, annonce_id: annonceId }]);
-    if (btn) btn.textContent = '❤️';
+    if (existing) {
+      // Unsave
+      await db.from('sauvegardes').delete().eq('id', existing.id);
+      if (btn) btn.textContent = '🤍';
+    } else {
+      // Save
+      await db.from('sauvegardes').insert([{ user_email: currentUser.email, annonce_id: annonceId }]);
+      if (btn) btn.textContent = '❤️';
+    }
+  } catch(e) {
+    console.error('Save error:', e);
   }
 }
 
