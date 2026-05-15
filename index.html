@@ -399,6 +399,24 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
   font-size: 12px; font-weight: 600; color: var(--bleu);
 }
 
+/* ── IMPRESSION ── */
+@media print {
+  nav, .hero, .search-wrap, .avantages-section, footer,
+  .sidebar-actions, .dashboard-header, .annonce-tabs,
+  .modal-overlay, #modal-suppression, #modal-message,
+  .lightbox, .btn-save, .listing-card, .page:not(#page-print) { display: none !important; }
+  #page-print { display: block !important; padding: 20px !important; }
+  .print-header { border-bottom: 2px solid #000; padding-bottom: 16px; margin-bottom: 24px; }
+  .print-section { margin-bottom: 24px; border: 1px solid #ccc; border-radius: 8px; padding: 16px; }
+  .print-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+  .print-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .print-item { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; }
+  .print-item span:first-child { color: #666; }
+  .print-item span:last-child { font-weight: 600; }
+  .print-footer { margin-top: 32px; padding-top: 16px; border-top: 2px solid #000; font-size: 11px; color: #666; }
+  body { font-family: Arial, sans-serif !important; }
+}
+
 /* ── MESSAGERIE ── */
 .messages-list { display: flex; flex-direction: column; gap: 12px; }
 .message-card {
@@ -943,6 +961,73 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <div class="auth-switch">Déjà un compte ? <a onclick="showPage('connexion')">Se connecter</a></div>
     </div>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE IMPRESSION -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-print" class="page">
+  <section style="padding:40px;max-width:900px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="section-eyebrow">Annonce archivée</div>
+        <h2 class="section-title" id="print-titre">Récapitulatif de vente</h2>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="btn btn-outline" onclick="history.back()">← Retour</button>
+      </div>
+    </div>
+
+    <!-- Bandeau légal -->
+    <div style="background:var(--bleu);color:#fff;border-radius:12px;padding:20px 24px;margin-bottom:28px;font-size:13px;line-height:1.6;">
+      ⚖️ <strong>Document de preuve de bonne foi</strong> — Conformément à l'article 1641 du Code Civil, AutoNet archive cette annonce pendant 24 mois après la date de vente. Ce document peut être utilisé comme preuve en cas de litige lié aux vices cachés.
+    </div>
+
+    <!-- Infos véhicule -->
+    <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
+      <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;">🚗 Informations du véhicule</h3>
+      <div class="fiche-grid" id="print-fiche"></div>
+    </div>
+
+    <!-- Description -->
+    <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
+      <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;margin-bottom:12px;">📝 Description déclarée</h3>
+      <p id="print-description" style="font-size:14px;color:var(--texte-muted);line-height:1.7;"></p>
+    </div>
+
+    <!-- Options -->
+    <div id="print-options-section" style="display:none;background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
+      <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;margin-bottom:12px;">⚙️ Options & Équipements déclarés</h3>
+      <div class="options-tags" id="print-options"></div>
+    </div>
+
+    <!-- Entretien -->
+    <div id="print-entretien-section" style="display:none;background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
+      <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;margin-bottom:12px;">🔧 Historique d'entretien</h3>
+      <div id="print-entretien"></div>
+    </div>
+
+    <!-- CT -->
+    <div id="print-ct-section" style="display:none;background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
+      <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;margin-bottom:12px;">✅ Historique des contrôles techniques</h3>
+      <div id="print-ct"></div>
+    </div>
+
+    <!-- Dates & Vendeur -->
+    <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
+      <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;">📅 Informations de vente</h3>
+      <div class="fiche-grid" id="print-vente"></div>
+    </div>
+
+    <!-- Footer légal -->
+    <div style="background:var(--fond);border:1px solid var(--border);border-radius:12px;padding:20px 24px;font-size:12px;color:var(--texte-muted);line-height:1.7;">
+      <strong>AutoNet — autonet-auto.fr</strong><br>
+      Ce document est généré automatiquement par AutoNet et constitue une preuve horodatée de la déclaration du vendeur au moment de la mise en vente.<br>
+      Article 1641 Code Civil : garantie des vices cachés · Article 1645 Code Civil : vendeur de mauvaise foi<br>
+      <span id="print-date-generation"></span>
+    </div>
+  </section>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -1919,6 +2004,7 @@ async function chargerDashboard() {
         ' ' + statutBadge + '</div></div>' +
         '<div class="dashboard-actions">' +
         '<button class="btn btn-outline" onclick="voirDetail(' + a.id + ');showPage(\'detail\')">Voir</button>' +
+        (estVendu ? '<button class="btn btn-outline" style="color:var(--bleu);" onclick="imprimerAnnonce(' + a.id + ')">🖨️</button>' : '') +
         btnSupprimer + '</div></div>';
     }).join('');
   } catch(e) {
@@ -2186,6 +2272,92 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') lightboxNav(-1);
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
+
+// ── IMPRESSION ANNONCE ARCHIVÉE ──
+async function imprimerAnnonce(id) {
+  showPage('print');
+  try {
+    const { data, error } = await db.from('annonces').select('*').eq('id', id).single();
+    if (error) throw error;
+
+    // Titre
+    document.getElementById('print-titre').textContent = (data.marque || '') + ' ' + (data.modele || '') + ' · ' + (data.annee || '');
+
+    // Fiche
+    document.getElementById('print-fiche').innerHTML = `
+      <div class="fiche-item"><span class="fiche-key">Marque</span><span class="fiche-val">${data.marque || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Modèle</span><span class="fiche-val">${data.modele || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Année</span><span class="fiche-val">${data.annee || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Kilométrage</span><span class="fiche-val">${Number(data.kilometrage || 0).toLocaleString('fr-FR')} km</span></div>
+      <div class="fiche-item"><span class="fiche-key">Carburant</span><span class="fiche-val">${data.carburant || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Localisation</span><span class="fiche-val">${data.localisation || '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Prix de vente</span><span class="fiche-val">${Number(data.prix || 0).toLocaleString('fr-FR')} €</span></div>
+      <div class="fiche-item"><span class="fiche-key">Type</span><span class="fiche-val">${data.type || '-'}</span></div>
+    `;
+
+    // Description
+    document.getElementById('print-description').textContent = data.description || 'Aucune description fournie.';
+
+    // Options
+    if (data.options) {
+      const optsList = data.options.split('|').filter(o => o.trim());
+      if (optsList.length > 0) {
+        document.getElementById('print-options-section').style.display = 'block';
+        document.getElementById('print-options').innerHTML = optsList.map(o => '<span class="option-tag">✓ ' + o + '</span>').join('');
+      }
+    }
+
+    // Entretien
+    const { data: entretiens } = await db.from('entretiens').select('*').eq('annonce_id', id).order('date', { ascending: false });
+    if (entretiens && entretiens.length > 0) {
+      document.getElementById('print-entretien-section').style.display = 'block';
+      document.getElementById('print-entretien').innerHTML = entretiens.map(e => 
+        '<div class="entretien-item" style="margin-bottom:10px;">' +
+        '<div class="entretien-icon">🔧</div>' +
+        '<div class="entretien-info">' +
+        '<div class="entretien-title">' + (e.travaux || '') + '</div>' +
+        '<div class="entretien-sub">' + (e.date ? new Date(e.date).toLocaleDateString('fr-FR') : '') + (e.garage ? ' · ' + e.garage : '') + '</div>' +
+        '</div>' +
+        (e.montant ? '<div style="font-weight:700;">' + e.montant + ' €</div>' : '') +
+        '</div>'
+      ).join('');
+    }
+
+    // CT
+    const { data: controles } = await db.from('controles').select('*').eq('annonce_id', id).order('date', { ascending: false });
+    if (controles && controles.length > 0) {
+      document.getElementById('print-ct-section').style.display = 'block';
+      document.getElementById('print-ct').innerHTML = controles.map(ct => {
+        const isOk = ct.resultat === 'Favorable';
+        const isMajeure = ct.resultat === 'Défaillance majeure';
+        const cls = isOk ? 'ct-ok' : isMajeure ? 'ct-danger' : 'ct-warning';
+        const icon = isOk ? '✅' : isMajeure ? '❌' : '⚠️';
+        return '<div class="ct-item" style="margin-bottom:10px;">' +
+          '<div class="entretien-icon">' + icon + '</div>' +
+          '<div class="entretien-info">' +
+          '<div class="entretien-title">Contrôle technique</div>' +
+          '<div class="entretien-sub">' + (ct.date ? new Date(ct.date).toLocaleDateString('fr-FR') : '') + (ct.centre ? ' · ' + ct.centre : '') + (ct.kilometrage ? ' · ' + ct.kilometrage.toLocaleString('fr-FR') + ' km' : '') + '</div>' +
+          '</div>' +
+          '<div class="ct-result ' + cls + '">' + ct.resultat + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // Infos de vente
+    document.getElementById('print-vente').innerHTML = `
+      <div class="fiche-item"><span class="fiche-key">Date de publication</span><span class="fiche-val">${new Date(data.created_at).toLocaleDateString('fr-FR')}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Date de vente</span><span class="fiche-val">${data.date_vente ? new Date(data.date_vente).toLocaleDateString('fr-FR') : '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Archive jusqu'au</span><span class="fiche-val">${data.date_archivage ? new Date(data.date_archivage).toLocaleDateString('fr-FR') : '-'}</span></div>
+      <div class="fiche-item"><span class="fiche-key">Vendeur</span><span class="fiche-val">${data.prenom || '-'}</span></div>
+    `;
+
+    // Date de génération
+    document.getElementById('print-date-generation').textContent = 'Document généré le ' + new Date().toLocaleDateString('fr-FR') + ' à ' + new Date().toLocaleTimeString('fr-FR');
+
+  } catch(e) {
+    console.error('Print error:', e);
+  }
+}
 
 // ── SAUVEGARDÉES ──
 async function toggleSauvegarde(annonceId, btn) {
