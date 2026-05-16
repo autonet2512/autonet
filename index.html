@@ -787,7 +787,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           </div>
           <div class="sidebar-actions">
             <button class="btn btn-primary btn-lg" style="justify-content:center;" onclick="ouvrirModalMessage()">💬 Envoyer un message</button>
-            <button class="btn btn-outline btn-lg" style="justify-content:center;" onclick="contacterVendeur()">📞 Appel direct</button>
+            <div id="btn-appel-wrapper"></div>
             <button class="btn btn-outline btn-lg" style="justify-content:center;" id="btn-save-detail" onclick="toggleSauvegardeDetail()">🤍 Sauvegarder</button>
           </div>
         </div>
@@ -827,7 +827,13 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <select id="f-type"><option value="">Sélectionner</option><option>Voiture</option><option>Moto</option><option>Utilitaire</option></select>
     </div>
     <div class="form-group"><label>Localisation (Ville) *</label><input type="text" id="f-localisation" placeholder="Ex : Lyon"></div>
-    <div class="form-group"><label>Description</label><textarea id="f-description" placeholder="Décrivez votre véhicule : état général, options, historique..."></textarea></div>
+    <div class="form-group">
+      <label>Description *</label>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;line-height:1.6;">
+        ⚖️ <strong>Conseil légal :</strong> Décrivez précisément l'état du véhicule — qualités ET défauts mécaniques, carrosserie, usure. Cette description fait partie de votre annonce archivée 24 mois et peut être imprimée comme preuve de bonne foi en cas de litige (Art. 1641 Code Civil). <strong>Plus vous êtes précis, plus vous êtes protégé.</strong>
+      </div>
+      <textarea id="f-description" placeholder="Ex : Véhicule en très bon état général, première main. Entretien suivi chez Renault. Légère égratignure sur l'aile avant droite (visible sur photos). Pas de problème mécanique connu. Pneus changés en 2023. Climatisation fonctionnelle. Quelques traces d'usure normale sur les sièges..."></textarea>
+    </div>
 
     <div class="form-section-title">📞 Vos coordonnées</div>
     <div class="form-grid">
@@ -1314,6 +1320,18 @@ async function voirDetail(id) {
     chargerCSA(id);
     chargerEntretien(id);
     chargerCT(id);
+    // Set phone button
+    const appelWrapper = document.getElementById('btn-appel-wrapper');
+    if (appelWrapper) {
+      if (data.masquer_tel) {
+        appelWrapper.innerHTML = '<button class="btn btn-outline btn-lg" style="justify-content:center;color:var(--texte-muted);cursor:default;" disabled>🔒 Téléphone masqué</button>';
+      } else if (data.telephone) {
+        appelWrapper.innerHTML = '<a href="tel:' + data.telephone + '" class="btn btn-outline btn-lg" style="justify-content:center;">📞 ' + data.telephone + '</a>';
+      } else {
+        appelWrapper.innerHTML = '<button class="btn btn-outline btn-lg" style="justify-content:center;color:var(--texte-muted);cursor:default;" disabled>📞 Non renseigné</button>';
+      }
+    }
+
     document.getElementById('detail-vendeur').innerHTML = `${data.prenom || 'Vendeur'} · ${data.localisation || ''}<br><span style="color:var(--texte-light)">${data.email || ''}</span>${data.telephone ? `<br>${data.telephone}` : ''}`;
     // Load photos
     const { data: photoFiles } = await db.storage.from('photos').list(String(id));
@@ -1349,9 +1367,40 @@ async function voirDetail(id) {
       const optionsList = data.options.split('|').filter(o => o.trim());
       if (optionsList.length > 0) {
         document.getElementById('detail-options-section').style.display = 'block';
-        document.getElementById('detail-options').innerHTML = optionsList.map(opt => 
-          '<span class="option-tag">✓ ' + opt + '</span>'
-        ).join('');
+        
+        // Group by category
+        const categorized = {};
+        const uncategorized = [];
+        
+        optionsList.forEach(opt => {
+          let found = false;
+          if (typeof CATEGORIES_OPTIONS !== 'undefined') {
+            for (const cat of CATEGORIES_OPTIONS) {
+              if (cat.options.some(o => o.toLowerCase() === opt.toLowerCase())) {
+                if (!categorized[cat.titre]) categorized[cat.titre] = { icon: cat.icon, opts: [] };
+                categorized[cat.titre].opts.push(opt);
+                found = true;
+                break;
+              }
+            }
+          }
+          if (!found) uncategorized.push(opt);
+        });
+
+        let html = '';
+        for (const [titre, val] of Object.entries(categorized)) {
+          html += '<div style="margin-bottom:14px;">';
+          html += '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--texte-muted);margin-bottom:8px;">' + val.icon + ' ' + titre + '</div>';
+          html += '<div class="options-tags">' + val.opts.map(o => '<span class="option-tag">✓ ' + o + '</span>').join('') + '</div>';
+          html += '</div>';
+        }
+        if (uncategorized.length > 0) {
+          html += '<div style="margin-bottom:14px;">';
+          html += '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--texte-muted);margin-bottom:8px;">✏️ Autres</div>';
+          html += '<div class="options-tags">' + uncategorized.map(o => '<span class="option-tag">✓ ' + o + '</span>').join('') + '</div>';
+          html += '</div>';
+        }
+        document.getElementById('detail-options').innerHTML = html;
       }
     }
 
@@ -1729,10 +1778,13 @@ async function repondreMessage(rootMessageId) {
     const { data: rootMsg } = await db.from('messages').select('acheteur_email, acheteur_prenom, annonce_id').eq('id', rootMessageId).single();
     if (!rootMsg) throw new Error('Message introuvable');
 
+    // Get vendor name from annonce
+    const { data: annonceVendeur } = await db.from('annonces').select('prenom').eq('id', rootMsg.annonce_id).single().catch(() => ({ data: null }));
+    const vendeurPrenom = annonceVendeur ? (annonceVendeur.prenom || 'Vendeur') : 'Vendeur';
     await db.from('messages').insert([{
       annonce_id: rootMsg.annonce_id,
       vendeur_email: rootMsg.acheteur_email,
-      acheteur_prenom: 'Vendeur',
+      acheteur_prenom: vendeurPrenom,
       acheteur_email: currentUser.email,
       texte: texte,
       lu: false,
