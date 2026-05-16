@@ -1172,7 +1172,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 <script>
 // ══════════════════════════════════════════════════
 // ⚠️ REMPLACEZ CES DEUX LIGNES AVEC VOS CLÉS SUPABASE
-const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co';
+const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co/';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
 // ══════════════════════════════════════════════════
 
@@ -1779,8 +1779,11 @@ async function repondreMessage(rootMessageId) {
     if (!rootMsg) throw new Error('Message introuvable');
 
     // Get vendor name from annonce
-    const { data: annonceVendeur } = await db.from('annonces').select('prenom').eq('id', rootMsg.annonce_id).single().catch(() => ({ data: null }));
-    const vendeurPrenom = annonceVendeur ? (annonceVendeur.prenom || 'Vendeur') : 'Vendeur';
+    let vendeurPrenom = 'Vendeur';
+    try {
+      const { data: annonceVendeur } = await db.from('annonces').select('prenom').eq('id', rootMsg.annonce_id).maybeSingle();
+      if (annonceVendeur && annonceVendeur.prenom) vendeurPrenom = annonceVendeur.prenom;
+    } catch(e) {}
     await db.from('messages').insert([{
       annonce_id: rootMsg.annonce_id,
       vendeur_email: rootMsg.acheteur_email,
