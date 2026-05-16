@@ -1172,7 +1172,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 <script>
 // ══════════════════════════════════════════════════
 // ⚠️ REMPLACEZ CES DEUX LIGNES AVEC VOS CLÉS SUPABASE
-const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co/';
+const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
 // ══════════════════════════════════════════════════
 
@@ -1778,24 +1778,25 @@ async function repondreMessage(rootMessageId) {
     const { data: rootMsg } = await db.from('messages').select('acheteur_email, acheteur_prenom, annonce_id').eq('id', rootMessageId).single();
     if (!rootMsg) throw new Error('Message introuvable');
 
-    // Get vendor name from annonce
-    let vendeurPrenom = 'Vendeur';
-    try {
-      const { data: annonceVendeur } = await db.from('annonces').select('prenom').eq('id', rootMsg.annonce_id).maybeSingle();
-      if (annonceVendeur && annonceVendeur.prenom) vendeurPrenom = annonceVendeur.prenom;
-    } catch(e) {}
+    // Determine who is replying - vendor or buyer
+    const { data: annonceInfo } = await db.from('annonces').select('prenom, email').eq('id', rootMsg.annonce_id).maybeSingle().catch(() => ({ data: null }));
+    const isVendor = annonceInfo && annonceInfo.email === currentUser.email;
+    const replyerPrenom = isVendor 
+      ? (annonceInfo.prenom || 'Vendeur')
+      : (rootMsg.acheteur_prenom || 'Acheteur');
+
     await db.from('messages').insert([{
       annonce_id: rootMsg.annonce_id,
       vendeur_email: rootMsg.acheteur_email,
-      acheteur_prenom: vendeurPrenom,
+      acheteur_prenom: replyerPrenom,
       acheteur_email: currentUser.email,
       texte: texte,
       lu: false,
       reply_to: rootMessageId
     }]);
     // Notify buyer by email
-    const { data: annonceInfo } = await db.from('annonces').select('marque, modele').eq('id', rootMsg.annonce_id).single();
-    const annonceTitre = annonceInfo ? (annonceInfo.marque + ' ' + annonceInfo.modele) : 'AutoNet';
+    const { data: annonceInfoEmail } = await db.from('annonces').select('marque, modele').eq('id', rootMsg.annonce_id).single();
+    const annonceTitre = annonceInfoEmail ? (annonceInfoEmail.marque + ' ' + annonceInfoEmail.modele) : 'AutoNet';
     await envoyerNotifEmail(rootMsg.acheteur_email, rootMsg.acheteur_prenom, 'Le vendeur', annonceTitre, texte);
     textarea.value = '';
     chargerMessages(); // Refresh to show new reply
