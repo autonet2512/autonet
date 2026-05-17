@@ -859,10 +859,12 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     <div class="form-grid">
       <div class="form-group"><label>Marque *</label>
         <select id="f-marque-select"><option value="">Sélectionner une marque</option></select>
+        <input type="text" id="f-marque-autre" placeholder="Précisez la marque..." style="display:none;margin-top:8px;background:var(--fond);border:1.5px solid var(--border);padding:11px 14px;border-radius:9px;font-size:14px;width:100%;outline:none;" oninput="document.getElementById('f-marque').value=this.value">
         <input type="hidden" id="f-marque">
       </div>
       <div class="form-group"><label>Modèle *</label>
         <select id="f-modele-select" disabled><option value="">Sélectionner un modèle</option></select>
+        <input type="text" id="f-modele-autre" placeholder="Précisez le modèle..." style="display:none;margin-top:8px;background:var(--fond);border:1.5px solid var(--border);padding:11px 14px;border-radius:9px;font-size:14px;width:100%;outline:none;" oninput="document.getElementById('f-modele').value=this.value">
         <input type="hidden" id="f-modele">
       </div>
       <div class="form-group"><label>Année *</label><input type="number" id="f-annee" placeholder="Ex : 2020"></div>
@@ -1360,8 +1362,8 @@ async function chargerAnnonces(params = {}) {
     if (params.boite) query = query.eq('boite', params.boite);
     if (params.anneeMin) query = query.gte('annee', parseInt(params.anneeMin));
     if (params.anneeMax) query = query.lte('annee', parseInt(params.anneeMax));
-    if (params.kmMax) query = query.lte('kilometrage', parseInt(params.kmMax));
-    if (params.kmMin) query = query.gte('kilometrage', parseInt(params.kmMin));
+    if (params.kmMax && params.kmMax !== '') query = query.lte('kilometrage', parseInt(params.kmMax));
+    if (params.kmMin && params.kmMin !== '') query = query.gte('kilometrage', parseInt(params.kmMin));
     if (params.chMin) query = query.gte('puissance', parseInt(params.chMin));
     if (params.chMax) query = query.lte('puissance', parseInt(params.chMax));
     const { data, error } = await query;
@@ -2340,8 +2342,18 @@ function initSearchMarques() {
     if (!modeleSelect) return;
     const modeles = getModelesList(this.value);
     modeleSelect.innerHTML = '<option value="">Tous les modèles</option>' + modeles.map(m => '<option value="' + m + '">' + m + '</option>').join('');
-    modeleSelect.disabled = modeles.length === 0;
+    modeleSelect.disabled = modeles.length === 0 || this.value === 'Autre';
+    // Sync hidden input
+    const marqueInput = document.getElementById('search-marque');
+    if (marqueInput) marqueInput.value = this.value === 'Autre' ? '' : this.value;
   });
+  const modeleSelect = document.getElementById('search-modele-select');
+  if (modeleSelect) {
+    modeleSelect.addEventListener('change', function() {
+      const modeleInput = document.getElementById('search-modele');
+      if (modeleInput) modeleInput.value = this.value;
+    });
+  }
 }
 
 function initFormMarques() {
@@ -2349,18 +2361,45 @@ function initFormMarques() {
   if (!marqueSelect) return;
   const marques = getMarquesList();
   marqueSelect.innerHTML = '<option value="">Sélectionner une marque</option>' + marques.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+  
   marqueSelect.addEventListener('change', function() {
     const modeleSelect = document.getElementById('f-modele-select');
-    if (!modeleSelect) return;
-    const modeles = getModelesList(this.value);
-    modeleSelect.innerHTML = '<option value="">Sélectionner un modèle</option>' + modeles.map(m => '<option value="' + m + '">' + m + '</option>').join('');
-    modeleSelect.disabled = modeles.length === 0;
-    document.getElementById('f-marque').value = this.value;
+    const marqueInput = document.getElementById('f-marque');
+    const marqueAutre = document.getElementById('f-marque-autre');
+    const modeleAutre = document.getElementById('f-modele-autre');
+    
+    if (this.value === 'Autre') {
+      // Show text input for custom marque
+      if (marqueAutre) marqueAutre.style.display = 'block';
+      if (modeleAutre) modeleAutre.style.display = 'block';
+      if (modeleSelect) modeleSelect.style.display = 'none';
+      if (marqueInput) marqueInput.value = '';
+    } else {
+      if (marqueAutre) marqueAutre.style.display = 'none';
+      if (modeleAutre) modeleAutre.style.display = 'none';
+      if (modeleSelect) modeleSelect.style.display = 'block';
+      
+      if (modeleSelect) {
+        const modeles = getModelesList(this.value);
+        modeleSelect.innerHTML = '<option value="">Sélectionner un modèle</option>' + modeles.map(m => '<option value="' + m + '">' + m + '</option>').join('') + '<option value="Autre">Autre modèle...</option>';
+        modeleSelect.disabled = false;
+      }
+      if (marqueInput) marqueInput.value = this.value;
+    }
   });
+  
   const modeleSelect = document.getElementById('f-modele-select');
   if (modeleSelect) {
     modeleSelect.addEventListener('change', function() {
-      document.getElementById('f-modele').value = this.value;
+      const modeleInput = document.getElementById('f-modele');
+      const modeleAutre = document.getElementById('f-modele-autre');
+      if (this.value === 'Autre') {
+        if (modeleAutre) modeleAutre.style.display = 'block';
+        if (modeleInput) modeleInput.value = '';
+      } else {
+        if (modeleAutre) modeleAutre.style.display = 'none';
+        if (modeleInput) modeleInput.value = this.value;
+      }
     });
   }
 }
