@@ -644,8 +644,18 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
             <option>Utilitaire</option>
           </select>
         </div>
-        <div class="sf"><label>Marque</label><input type="text" id="search-marque" placeholder="Ex : Renault"></div>
-        <div class="sf"><label>Modèle</label><input type="text" id="search-modele" placeholder="Ex : Clio"></div>
+        <div class="sf"><label>Marque</label>
+          <select id="search-marque-select">
+            <option value="">Toutes les marques</option>
+          </select>
+          <input type="hidden" id="search-marque">
+        </div>
+        <div class="sf"><label>Modèle</label>
+          <select id="search-modele-select" disabled>
+            <option value="">Tous les modèles</option>
+          </select>
+          <input type="hidden" id="search-modele">
+        </div>
         <div class="sf"><label>Boîte</label>
           <select id="search-boite">
             <option value="">Toutes</option>
@@ -656,13 +666,19 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           </select>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:14px;align-items:end;">
-        <div class="sf"><label>Année min</label><input type="number" id="search-annee-min" placeholder="Ex : 2018"></div>
-        <div class="sf"><label>Année max</label><input type="number" id="search-annee-max" placeholder="Ex : 2024"></div>
-        <div class="sf"><label>Km max</label><input type="number" id="search-km" placeholder="Ex : 100000"></div>
-        <div class="sf"><label>Budget max (€)</label><input type="number" id="search-budget" placeholder="Ex : 20000"></div>
-        <div class="sf"><label>CH min</label><input type="number" id="search-ch-min" placeholder="Ex : 100"></div>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:14px;align-items:end;margin-bottom:14px;">
+        <div class="sf"><label>Année min</label><input type="number" id="search-annee-min" placeholder="2018"></div>
+        <div class="sf"><label>Année max</label><input type="number" id="search-annee-max" placeholder="2024"></div>
+        <div class="sf"><label>Km min</label><input type="number" id="search-km-min" placeholder="0"></div>
+        <div class="sf"><label>Km max</label><input type="number" id="search-km" placeholder="100000"></div>
+        <div class="sf"><label>Budget min (€)</label><input type="number" id="search-budget-min" placeholder="0"></div>
+        <div class="sf"><label>Budget max (€)</label><input type="number" id="search-budget" placeholder="50000"></div>
+        <div class="sf"><label>CH min</label><input type="number" id="search-ch-min" placeholder="100"></div>
+        <div class="sf"><label>CH max</label><input type="number" id="search-ch-max" placeholder="500"></div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;">
         <button class="btn btn-primary btn-lg" onclick="rechercherAnnonces()" style="white-space:nowrap;">🔍 Rechercher</button>
+        <button onclick="reinitialiserRecherche()" class="btn btn-outline" style="font-size:13px;padding:11px 20px;">✕ Réinitialiser</button>
       </div>
       <div style="margin-top:12px;">
         <button onclick="reinitialiserRecherche()" class="btn btn-outline" style="font-size:13px;padding:7px 16px;">✕ Réinitialiser</button>
@@ -841,8 +857,14 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     <div id="deposer-alert"></div>
     <div class="form-section-title">🚗 Informations du véhicule</div>
     <div class="form-grid">
-      <div class="form-group"><label>Marque *</label><input type="text" id="f-marque" placeholder="Ex : Renault"></div>
-      <div class="form-group"><label>Modèle *</label><input type="text" id="f-modele" placeholder="Ex : Clio"></div>
+      <div class="form-group"><label>Marque *</label>
+        <select id="f-marque-select"><option value="">Sélectionner une marque</option></select>
+        <input type="hidden" id="f-marque">
+      </div>
+      <div class="form-group"><label>Modèle *</label>
+        <select id="f-modele-select" disabled><option value="">Sélectionner un modèle</option></select>
+        <input type="hidden" id="f-modele">
+      </div>
       <div class="form-group"><label>Année *</label><input type="number" id="f-annee" placeholder="Ex : 2020"></div>
       <div class="form-group"><label>Kilométrage *</label><input type="number" id="f-km" placeholder="Ex : 45000"></div>
       <div class="form-group"><label>Prix (€) *</label><input type="number" id="f-prix" placeholder="Ex : 12000"></div>
@@ -1220,7 +1242,8 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 // ══════════════════════════════════════════════════
 // ⚠️ REMPLACEZ CES DEUX LIGNES AVEC VOS CLÉS SUPABASE
 const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE
+';
 // ══════════════════════════════════════════════════
 
 const { createClient } = supabase;
@@ -1238,18 +1261,21 @@ function showPage(page) {
   if (page === 'accueil') chargerAccueilListings();
   if (page === 'annonces') chargerAnnonces();
   if (page === 'dashboard') chargerDashboard();
-  if (page === 'deposer') setTimeout(initOptions, 100);
+  if (page === 'deposer') { setTimeout(initOptions, 100); setTimeout(initFormMarques, 100); }
+  if (page === 'accueil') setTimeout(initSearchMarques, 100);
 }
 
 // ── AFFICHER UNE CARD ANNONCE ──
 function renderCard(a) {
   const estVendu = a.statut === 'vendu';
+  const estSupprime = a.statut === 'suppression_pending';
   return `
-    <div class="listing-card" onclick="voirDetail(${a.id})" style="${estVendu ? 'opacity:0.8;' : ''}">
+    <div class="listing-card" onclick="voirDetail(${a.id})" style="${estVendu || estSupprime ? 'opacity:0.75;' : ''}">
       <div class="listing-img" id="card-img-${a.id}" style="background:linear-gradient(135deg,#dce6ff,#e8eeff);font-size:64px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
         <img id="card-photo-${a.id}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;" src="">
         <span id="card-emoji-${a.id}">${a.type === 'Moto' ? '🏍️' : '🚗'}</span>
         ${estVendu ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:5;"><span style="background:#dc2626;color:#fff;font-family:Bricolage Grotesque,sans-serif;font-size:22px;font-weight:800;padding:10px 28px;border-radius:8px;letter-spacing:1px;transform:rotate(-10deg);">VENDU</span></div>' : ''}
+        ${estSupprime ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:5;"><span style="background:#6b7280;color:#fff;font-family:Bricolage Grotesque,sans-serif;font-size:16px;font-weight:800;padding:8px 20px;border-radius:8px;letter-spacing:1px;">ANNONCE RETIRÉE</span></div>' : ''}
         <div class="listing-badges"><span class="badge badge-vert">✓ Annonce complète</span></div>
         <div class="listing-img-count" id="card-count-${a.id}">📷 Photos</div>
       </div>
@@ -1329,13 +1355,16 @@ async function chargerAnnonces(params = {}) {
     let query = db.from('annonces').select('*').in('statut', ['active', null]).order('created_at', { ascending: false });
     if (params.marque) query = query.ilike('marque', `%${params.marque}%`);
     if (params.modele) query = query.ilike('modele', `%${params.modele}%`);
-    if (params.budget) query = query.lte('prix', params.budget);
+    if (params.budget) query = query.lte('prix', parseInt(params.budget));
+    if (params.budgetMin) query = query.gte('prix', parseInt(params.budgetMin));
     if (params.type) query = query.eq('type', params.type);
     if (params.boite) query = query.eq('boite', params.boite);
     if (params.anneeMin) query = query.gte('annee', parseInt(params.anneeMin));
     if (params.anneeMax) query = query.lte('annee', parseInt(params.anneeMax));
     if (params.kmMax) query = query.lte('kilometrage', parseInt(params.kmMax));
+    if (params.kmMin) query = query.gte('kilometrage', parseInt(params.kmMin));
     if (params.chMin) query = query.gte('puissance', parseInt(params.chMin));
+    if (params.chMax) query = query.lte('puissance', parseInt(params.chMax));
     const { data, error } = await query;
     if (error) throw error;
     if (!data || data.length === 0) {
@@ -1353,29 +1382,34 @@ async function chargerAnnonces(params = {}) {
 
 // ── RECHERCHE ──
 function rechercherAnnonces() {
+  const marqueSelect = document.getElementById('search-marque-select');
+  const modeleSelect = document.getElementById('search-modele-select');
   const params = {
-    marque: document.getElementById('search-marque').value,
-    modele: document.getElementById('search-modele') ? document.getElementById('search-modele').value : '',
-    budget: document.getElementById('search-budget').value,
-    type: document.getElementById('search-type').value,
+    marque: marqueSelect ? marqueSelect.value : document.getElementById('search-marque').value,
+    modele: modeleSelect ? modeleSelect.value : document.getElementById('search-modele').value,
+    budget: document.getElementById('search-budget') ? document.getElementById('search-budget').value : '',
+    budgetMin: document.getElementById('search-budget-min') ? document.getElementById('search-budget-min').value : '',
+    type: document.getElementById('search-type') ? document.getElementById('search-type').value : '',
     boite: document.getElementById('search-boite') ? document.getElementById('search-boite').value : '',
     anneeMin: document.getElementById('search-annee-min') ? document.getElementById('search-annee-min').value : '',
     anneeMax: document.getElementById('search-annee-max') ? document.getElementById('search-annee-max').value : '',
     kmMax: document.getElementById('search-km') ? document.getElementById('search-km').value : '',
+    kmMin: document.getElementById('search-km-min') ? document.getElementById('search-km-min').value : '',
     chMin: document.getElementById('search-ch-min') ? document.getElementById('search-ch-min').value : '',
+    chMax: document.getElementById('search-ch-max') ? document.getElementById('search-ch-max').value : '',
   };
   showPage('annonces');
   chargerAnnonces(params);
 }
 
 function reinitialiserRecherche() {
-  ['search-marque','search-modele','search-budget','search-km','search-annee-min','search-annee-max','search-ch-min'].forEach(id => {
+  ['search-marque','search-modele','search-budget','search-budget-min','search-km','search-km-min','search-annee-min','search-annee-max','search-ch-min','search-ch-max'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['search-type','search-boite'].forEach(id => {
+  ['search-type','search-boite','search-marque-select','search-modele-select'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.value = '';
+    if (el) { el.value = ''; if (id === 'search-modele-select') el.disabled = true; }
   });
   chargerAnnonces({});
 }
@@ -2249,6 +2283,89 @@ async function supprimerAnnonce(id) {
   }
 }
 
+// ── MARQUES & MODÈLES ──
+const MARQUES_MODELES = {
+  'Alfa Romeo': ['147','156','159','Giulia','Giulietta','Stelvio','Tonale'],
+  'Audi': ['A1','A2','A3','A4','A5','A6','A7','A8','Q2','Q3','Q5','Q7','Q8','TT','R8','e-tron'],
+  'BMW': ['Série 1','Série 2','Série 3','Série 4','Série 5','Série 6','Série 7','X1','X2','X3','X4','X5','X6','X7','Z4','i3','i4','iX'],
+  'Citroën': ['AX','Berlingo','C1','C2','C3','C4','C5','C5 X','DS3','DS4','DS5','Jumpy','Picasso','Saxo','Xsara'],
+  'Dacia': ['Dokker','Duster','Jogger','Lodgy','Logan','Sandero','Spring'],
+  'Ferrari': ['296','488','812','F8','GTC4','Portofino','Roma','SF90'],
+  'Fiat': ['124 Spider','500','500L','500X','Bravo','Doblo','Grande Punto','Panda','Stilo','Tipo'],
+  'Ford': ['B-Max','C-Max','EcoSport','Edge','Explorer','Fiesta','Focus','Galaxy','Ka','Kuga','Mondeo','Mustang','Puma','Ranger','S-Max','Transit'],
+  'Honda': ['Accord','Civic','CR-V','HR-V','Jazz','NSX','Pilot','Type R'],
+  'Hyundai': ['Bayon','i10','i20','i30','i40','Ioniq','Kona','Santa Fe','Tucson'],
+  'Jaguar': ['E-Pace','F-Pace','F-Type','I-Pace','XE','XF','XJ'],
+  'Jeep': ['Cherokee','Compass','Gladiator','Grand Cherokee','Renegade','Wrangler'],
+  'Kia': ['Ceed','EV6','Niro','Picanto','Rio','Sorento','Soul','Sportage','Stinger','Stonic'],
+  'Lamborghini': ['Aventador','Huracán','Urus'],
+  'Land Rover': ['Defender','Discovery','Discovery Sport','Freelander','Range Rover','Range Rover Evoque','Range Rover Sport','Range Rover Velar'],
+  'Lexus': ['CT','ES','GS','IS','LC','LS','NX','RX','UX'],
+  'Maserati': ['Ghibli','GranTurismo','Grecale','Levante','MC20','Quattroporte'],
+  'Mazda': ['2','3','5','6','CX-3','CX-30','CX-5','CX-60','MX-5'],
+  'Mercedes': ['Classe A','Classe B','Classe C','Classe CLA','Classe CLS','Classe E','Classe G','Classe GLA','Classe GLC','Classe GLE','Classe GLK','Classe GLS','Classe S','Classe SL','Classe SLK','EQA','EQB','EQC','EQE','EQS','Vito'],
+  'Mini': ['Cabrio','Clubman','Countryman','Hatch','Paceman'],
+  'Mitsubishi': ['ASX','Eclipse Cross','L200','Outlander','Pajero'],
+  'Nissan': ['350Z','370Z','Ariya','Juke','Leaf','Micra','Navara','Note','Pathfinder','Pulsar','Qashqai','X-Trail'],
+  'Opel': ['Adam','Agila','Antara','Astra','Cascada','Corsa','Crossland','Grandland','Insignia','Meriva','Mokka','Vectra','Zafira'],
+  'Peugeot': ['107','108','2008','206','207','208','3008','306','307','308','4007','4008','408','5008','508','Partner','RCZ'],
+  'Porsche': ['718','911','Boxster','Cayenne','Cayman','Macan','Panamera','Taycan'],
+  'Renault': ['Arkana','Austral','Captur','Clio','Espace','Express','Fluence','Kadjar','Kangoo','Koleos','Laguna','Latitude','Megane','Modus','Rafale','Sandero','Scenic','Talisman','Trafic','Twingo','Zoe'],
+  'Seat': ['Altea','Arona','Ateca','Exeo','Ibiza','Leon','Tarraco','Toledo'],
+  'Skoda': ['Citigo','Enyaq','Fabia','Karoq','Kodiaq','Octavia','Rapid','Scala','Superb','Yeti'],
+  'Smart': ['EQ','Fortwo','Roadster'],
+  'Subaru': ['Forester','Impreza','Legacy','Outback','WRX','XV'],
+  'Suzuki': ['Alto','Baleno','Celerio','Ignis','Jimny','S-Cross','Swift','SX4','Vitara'],
+  'Tesla': ['Model 3','Model S','Model X','Model Y','Roadster'],
+  'Toyota': ['Auris','Aygo','C-HR','Camry','Corolla','GR86','Hilux','Land Cruiser','Prius','ProAce','RAV4','Supra','Verso','Yaris'],
+  'Volkswagen': ['Arteon','Caddy','California','Golf','ID.3','ID.4','ID.5','ID.7','Passat','Polo','Scirocco','Sharan','T-Cross','T-Roc','Tiguan','Touareg','Touran','Transporter','Up'],
+  'Volvo': ['C30','C40','S60','S90','V40','V60','V90','XC40','XC60','XC90'],
+  'Autre': []
+};
+
+function getMarquesList() {
+  return Object.keys(MARQUES_MODELES).sort();
+}
+
+function getModelesList(marque) {
+  return MARQUES_MODELES[marque] || [];
+}
+
+function initSearchMarques() {
+  const marqueSelect = document.getElementById('search-marque-select');
+  if (!marqueSelect) return;
+  const marques = getMarquesList();
+  marqueSelect.innerHTML = '<option value="">Toutes les marques</option>' + marques.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+  marqueSelect.addEventListener('change', function() {
+    const modeleSelect = document.getElementById('search-modele-select');
+    if (!modeleSelect) return;
+    const modeles = getModelesList(this.value);
+    modeleSelect.innerHTML = '<option value="">Tous les modèles</option>' + modeles.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+    modeleSelect.disabled = modeles.length === 0;
+  });
+}
+
+function initFormMarques() {
+  const marqueSelect = document.getElementById('f-marque-select');
+  if (!marqueSelect) return;
+  const marques = getMarquesList();
+  marqueSelect.innerHTML = '<option value="">Sélectionner une marque</option>' + marques.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+  marqueSelect.addEventListener('change', function() {
+    const modeleSelect = document.getElementById('f-modele-select');
+    if (!modeleSelect) return;
+    const modeles = getModelesList(this.value);
+    modeleSelect.innerHTML = '<option value="">Sélectionner un modèle</option>' + modeles.map(m => '<option value="' + m + '">' + m + '</option>').join('');
+    modeleSelect.disabled = modeles.length === 0;
+    document.getElementById('f-marque').value = this.value;
+  });
+  const modeleSelect = document.getElementById('f-modele-select');
+  if (modeleSelect) {
+    modeleSelect.addEventListener('change', function() {
+      document.getElementById('f-modele').value = this.value;
+    });
+  }
+}
+
 // ── OPTIONS VÉHICULE ──
 const CATEGORIES_OPTIONS = [
   { icon: '🛋️', titre: 'Confort', options: ['Climatisation', 'Climatisation automatique', 'Toit ouvrant', 'Toit panoramique', 'Sièges chauffants', 'Sièges ventilés', 'Sièges électriques', 'Sièges en cuir', 'Volant chauffant', 'Régulateur de vitesse', 'Régulateur de vitesse adaptatif', 'GPS intégré', 'Rétroviseurs électriques', 'Vitres électriques', 'Accoudoir central'] },
@@ -2547,6 +2664,7 @@ async function chargerSauvegardees() {
       .select('*, annonces(*)')
       .eq('user_email', currentUser.email)
       .order('created_at', { ascending: false });
+    // Note: we show ALL saved annonces including vendu/supprime with badge
     
     if (error) throw error;
     if (!data || data.length === 0) {
@@ -2635,6 +2753,7 @@ async function envoyerNotifEmail(destinataireEmail, destinatairePrenom, expedite
 // ── INIT ──
 async function init() {
   initEmailJS();
+  setTimeout(initSearchMarques, 200);
   const { data } = await db.auth.getSession();
   if (data.session) {
     currentUser = data.session.user;
