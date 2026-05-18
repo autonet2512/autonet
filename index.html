@@ -665,6 +665,9 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
             <option>CVT</option>
           </select>
         </div>
+        <div class="sf"><label>Finition</label>
+          <input type="text" id="search-finition" placeholder="Ex : S Line, GTI...">
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:14px;align-items:end;margin-bottom:14px;">
         <div class="sf"><label>Année min</label><input type="number" id="search-annee-min" placeholder="2018"></div>
@@ -889,6 +892,11 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     </div>
     <div class="form-group"><label>Type de véhicule *</label>
       <select id="f-type"><option value="">Sélectionner</option><option>Voiture</option><option>Moto</option><option>Utilitaire</option></select>
+    </div>
+    <div class="form-group">
+      <label>Finition <span style="font-size:12px;color:var(--texte-light);font-weight:400;">(optionnel)</span></label>
+      <input type="text" id="f-finition" placeholder="Ex : S Line, GTI, RS, Sport, Luxury, Business...">
+      <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">La finition précise le niveau d'équipement du véhicule.</p>
     </div>
     <div class="form-group"><label>Localisation (Ville) *</label><input type="text" id="f-localisation" placeholder="Ex : Lyon"></div>
     <div class="form-group">
@@ -1366,6 +1374,7 @@ async function chargerAnnonces(params = {}) {
     if (params.kmMin && params.kmMin !== '') query = query.gte('kilometrage', parseInt(params.kmMin));
     if (params.chMin) query = query.gte('puissance', parseInt(params.chMin));
     if (params.chMax) query = query.lte('puissance', parseInt(params.chMax));
+    if (params.finition) query = query.ilike('finition', `%${params.finition}%`);
     const { data, error } = await query;
     if (error) throw error;
     if (!data || data.length === 0) {
@@ -1398,13 +1407,14 @@ function rechercherAnnonces() {
     kmMin: document.getElementById('search-km-min') ? document.getElementById('search-km-min').value : '',
     chMin: document.getElementById('search-ch-min') ? document.getElementById('search-ch-min').value : '',
     chMax: document.getElementById('search-ch-max') ? document.getElementById('search-ch-max').value : '',
+    finition: document.getElementById('search-finition') ? document.getElementById('search-finition').value.trim() : '',
   };
   showPage('annonces');
   chargerAnnonces(params);
 }
 
 function reinitialiserRecherche() {
-  ['search-marque','search-modele','search-budget','search-budget-min','search-km','search-km-min','search-annee-min','search-annee-max','search-ch-min','search-ch-max'].forEach(id => {
+  ['search-marque','search-modele','search-budget','search-budget-min','search-km','search-km-min','search-annee-min','search-annee-max','search-ch-min','search-ch-max','search-finition'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -1524,6 +1534,7 @@ async function voirDetail(id) {
       <div class="fiche-item"><span class="fiche-key">Type</span><span class="fiche-val">${data.type || '-'}</span></div>
       <div class="fiche-item"><span class="fiche-key">Puissance</span><span class="fiche-val">${data.puissance ? data.puissance + ' CH' : '-'}</span></div>
       <div class="fiche-item"><span class="fiche-key">Boîte</span><span class="fiche-val">${data.boite || '-'}</span></div>
+      ${data.finition ? '<div class="fiche-item"><span class="fiche-key">Finition</span><span class="fiche-val">' + data.finition + '</span></div>' : ''}
       <div class="fiche-item"><span class="fiche-key">Téléphone</span><span class="fiche-val">${telDisplay}</span></div>
 
     `;
@@ -1998,6 +2009,7 @@ async function publierAnnonce() {
     const masquerTel = document.getElementById('f-masquer-tel') ? document.getElementById('f-masquer-tel').checked : false;
     const puissance = document.getElementById('f-puissance') ? document.getElementById('f-puissance').value : '';
     const boite = document.getElementById('f-boite') ? document.getElementById('f-boite').value : '';
+    const finition = document.getElementById('f-finition') ? document.getElementById('f-finition').value.trim() : '';
     const { data: annonce, error } = await db.from('annonces').insert([{
       marque, modele, annee: parseInt(annee), kilometrage: parseInt(km),
       prix: parseInt(prix), carburant, type, localisation, description,
@@ -2005,6 +2017,7 @@ async function publierAnnonce() {
       masquer_tel: masquerTel,
       puissance: puissance ? parseInt(puissance) : null,
       boite: boite || null,
+      finition: finition || null,
       options: optionsSelectionnees.length > 0 ? optionsSelectionnees.join('|') : null
     }]).select().single();
     if (error) throw error;
@@ -2286,42 +2299,61 @@ async function supprimerAnnonce(id) {
 
 // ── MARQUES & MODÈLES ──
 const MARQUES_MODELES = {
-  'Alfa Romeo': ['147','156','159','Giulia','Giulietta','Stelvio','Tonale'],
-  'Audi': ['A1','A2','A3','A4','A5','A6','A7','A8','Q2','Q3','Q5','Q7','Q8','TT','R8','e-tron'],
-  'BMW': ['Série 1','Série 2','Série 3','Série 4','Série 5','Série 6','Série 7','X1','X2','X3','X4','X5','X6','X7','Z4','i3','i4','iX'],
-  'Citroën': ['AX','Berlingo','C1','C2','C3','C4','C5','C5 X','DS3','DS4','DS5','Jumpy','Picasso','Saxo','Xsara'],
-  'Dacia': ['Dokker','Duster','Jogger','Lodgy','Logan','Sandero','Spring'],
-  'Ferrari': ['296','488','812','F8','GTC4','Portofino','Roma','SF90'],
-  'Fiat': ['124 Spider','500','500L','500X','Bravo','Doblo','Grande Punto','Panda','Stilo','Tipo'],
-  'Ford': ['B-Max','C-Max','EcoSport','Edge','Explorer','Fiesta','Focus','Galaxy','Ka','Kuga','Mondeo','Mustang','Puma','Ranger','S-Max','Transit'],
-  'Honda': ['Accord','Civic','CR-V','HR-V','Jazz','NSX','Pilot','Type R'],
-  'Hyundai': ['Bayon','i10','i20','i30','i40','Ioniq','Kona','Santa Fe','Tucson'],
-  'Jaguar': ['E-Pace','F-Pace','F-Type','I-Pace','XE','XF','XJ'],
-  'Jeep': ['Cherokee','Compass','Gladiator','Grand Cherokee','Renegade','Wrangler'],
-  'Kia': ['Ceed','EV6','Niro','Picanto','Rio','Sorento','Soul','Sportage','Stinger','Stonic'],
-  'Lamborghini': ['Aventador','Huracán','Urus'],
-  'Land Rover': ['Defender','Discovery','Discovery Sport','Freelander','Range Rover','Range Rover Evoque','Range Rover Sport','Range Rover Velar'],
-  'Lexus': ['CT','ES','GS','IS','LC','LS','NX','RX','UX'],
-  'Maserati': ['Ghibli','GranTurismo','Grecale','Levante','MC20','Quattroporte'],
-  'Mazda': ['2','3','5','6','CX-3','CX-30','CX-5','CX-60','MX-5'],
-  'Mercedes': ['Classe A','Classe B','Classe C','Classe CLA','Classe CLS','Classe E','Classe G','Classe GLA','Classe GLC','Classe GLE','Classe GLK','Classe GLS','Classe S','Classe SL','Classe SLK','EQA','EQB','EQC','EQE','EQS','Vito'],
-  'Mini': ['Cabrio','Clubman','Countryman','Hatch','Paceman'],
-  'Mitsubishi': ['ASX','Eclipse Cross','L200','Outlander','Pajero'],
-  'Nissan': ['350Z','370Z','Ariya','Juke','Leaf','Micra','Navara','Note','Pathfinder','Pulsar','Qashqai','X-Trail'],
-  'Opel': ['Adam','Agila','Antara','Astra','Cascada','Corsa','Crossland','Grandland','Insignia','Meriva','Mokka','Vectra','Zafira'],
-  'Peugeot': ['107','108','2008','206','207','208','3008','306','307','308','4007','4008','408','5008','508','Partner','RCZ'],
-  'Porsche': ['718','911','Boxster','Cayenne','Cayman','Macan','Panamera','Taycan'],
-  'Renault': ['Arkana','Austral','Captur','Clio','Espace','Express','Fluence','Kadjar','Kangoo','Koleos','Laguna','Latitude','Megane','Modus','Rafale','Sandero','Scenic','Talisman','Trafic','Twingo','Zoe'],
-  'Seat': ['Altea','Arona','Ateca','Exeo','Ibiza','Leon','Tarraco','Toledo'],
-  'Skoda': ['Citigo','Enyaq','Fabia','Karoq','Kodiaq','Octavia','Rapid','Scala','Superb','Yeti'],
-  'Smart': ['EQ','Fortwo','Roadster'],
-  'Subaru': ['Forester','Impreza','Legacy','Outback','WRX','XV'],
-  'Suzuki': ['Alto','Baleno','Celerio','Ignis','Jimny','S-Cross','Swift','SX4','Vitara'],
-  'Tesla': ['Model 3','Model S','Model X','Model Y','Roadster'],
-  'Toyota': ['Auris','Aygo','C-HR','Camry','Corolla','GR86','Hilux','Land Cruiser','Prius','ProAce','RAV4','Supra','Verso','Yaris'],
-  'Volkswagen': ['Arteon','Caddy','California','Golf','ID.3','ID.4','ID.5','ID.7','Passat','Polo','Scirocco','Sharan','T-Cross','T-Roc','Tiguan','Touareg','Touran','Transporter','Up'],
-  'Volvo': ['C30','C40','S60','S90','V40','V60','V90','XC40','XC60','XC90'],
-  'Autre': []
+  'Alfa Romeo': ['Alfetta','Brera','Crosswagon','Giulia','Giulietta','GT','GTA','GTV','Junior','MiTo','Spider','Stelvio','Tonale','147','155','156','159','164','166','Autre...'],
+  'Aston Martin': ['DB11','DB12','DB9','DBS','DBX','Rapide','Vantage','Autre...'],
+  'Audi': ['A1','A2','A3','A4','A5','A6','A7','A8','e-tron','e-tron GT','e-tron S','Q2','Q3','Q4 e-tron','Q5','Q6','Q7','Q8','Q8 e-tron','R8','RS3','RS4','RS5','RS6','RS7','RS Q3','RS Q8','S1','S3','S4','S5','S6','S7','S8','SQ5','SQ7','SQ8','TT','TT RS','TTS','Autre...'],
+  'BMW': ['i3','i4','i5','i7','iX','iX1','iX2','iX3','M2','M3','M4','M5','M6','M8','Série 1','Série 2','Série 3','Série 4','Série 5','Série 6','Série 7','Série 8','X1','X2','X3','X3 M','X4','X4 M','X5','X5 M','X6','X6 M','X7','Z3','Z4','Autre...'],
+  'Bugatti': ['Chiron','Divo','Veyron','Autre...'],
+  'Cadillac': ['CT4','CT5','Escalade','XT4','XT5','XT6','Autre...'],
+  'Chevrolet': ['Camaro','Corvette','Cruze','Equinox','Malibu','Suburban','Tahoe','Trax','Autre...'],
+  'Chrysler': ['300C','Pacifica','Voyager','Autre...'],
+  'Citroën': ['AX','Berlingo','BX','C1','C2','C3','C3 Aircross','C4','C4 Cactus','C4 Picasso','C5','C5 Aircross','C5 X','C6','C8','DS3','DS4','DS5','DS7','eC4','Grand C4 Picasso','Jumper','Jumpy','Méhari','Saxo','Xantia','Xsara','ZX','Autre...'],
+  'Cupra': ['Born','Formentor','Leon','Terramar','Autre...'],
+  'Dacia': ['Bigster','Dokker','Duster','Jogger','Lodgy','Logan','Logan MCV','Sandero','Sandero Stepway','Spring','Autre...'],
+  'Daewoo': ['Kalos','Lacetti','Lanos','Matiz','Nubira','Autre...'],
+  'Dodge': ['Challenger','Charger','Durango','Ram','Viper','Autre...'],
+  'DS Automobiles': ['DS 3','DS 3 Crossback','DS 4','DS 4 Crossback','DS 5','DS 7 Crossback','DS 9','Autre...'],
+  'Ferrari': ['296 GTB','296 GTS','488 GTB','488 Pista','488 Spider','812 Competizione','812 GTS','812 Superfast','F40','F430','F8 Tributo','GTC4Lusso','LaFerrari','Portofino','Portofino M','Roma','SF90 Spider','SF90 Stradale','Testarossa','Autre...'],
+  'Fiat': ['124 Spider','500','500C','500e','500L','500X','Barchetta','Bravo','Coupe','Croma','Doblo','Freemont','Grande Panda','Grande Punto','Idea','Multipla','Panda','Punto','Qubo','Sedici','Stilo','Tipo','Ulysse','Autre...'],
+  'Ford': ['B-Max','C-Max','EcoSport','Edge','Escape','Explorer','F-150','Fiesta','Fiesta ST','Focus','Focus RS','Focus ST','Fusion','Galaxy','Grand C-Max','Ka','Ka+','Kuga','Maverick','Mondeo','Mustang','Mustang Mach-E','Puma','Ranger','S-Max','Transit','Transit Connect','Transit Custom','Transit Courier','Autre...'],
+  'Honda': ['Accord','Civic','Civic Type R','CR-V','CR-Z','e','FR-V','HR-V','Insight','Jazz','Legend','NSX','Pilot','Prelude','S2000','Autre...'],
+  'Hummer': ['H1','H2','H3','EV','Autre...'],
+  'Hyundai': ['Bayon','Coupe','Getz','Grand Santa Fe','i10','i20','i20 N','i30','i30 N','i30 Fastback','i40','Ioniq','Ioniq 5','Ioniq 6','Kona','Kona Electric','Matrix','Santa Fe','Sonata','Staria','Tucson','Veloster','Autre...'],
+  'Infiniti': ['EX','FX','G','M','Q30','Q50','Q60','Q70','QX30','QX50','QX60','QX70','Autre...'],
+  'Isuzu': ['D-Max','Trooper','Autre...'],
+  'Jaguar': ['E-Pace','F-Pace','F-Type','I-Pace','S-Type','X-Type','XE','XF','XJ','XK','Autre...'],
+  'Jeep': ['Avenger','Cherokee','Compass','Gladiator','Grand Cherokee','Renegade','Wrangler','Autre...'],
+  'Kia': ['Carens','Ceed','EV6','EV9','Niro','Picanto','ProCeed','Rio','Sorento','Soul','Sportage','Stinger','Stonic','Xceed','Autre...'],
+  'Lamborghini': ['Aventador','Gallardo','Huracán','Urus','Revuelto','Autre...'],
+  'Lancia': ['Delta','Musa','Phedra','Thesis','Ypsilon','Autre...'],
+  'Land Rover': ['Defender','Discovery','Discovery Sport','Freelander','Range Rover','Range Rover Evoque','Range Rover Sport','Range Rover Velar','Autre...'],
+  'Lexus': ['CT 200h','ES','GS','IS','LC','LS','NX','RC','RC F','RX','UX','Autre...'],
+  'Lotus': ['Emira','Evija','Evora','Exige','Elise','Autre...'],
+  'Maserati': ['Ghibli','GranCabrio','GranSport','GranTurismo','Grecale','Levante','MC20','Quattroporte','Autre...'],
+  'Mazda': ['2','3','5','6','CX-3','CX-30','CX-5','CX-60','CX-80','MX-5','MX-30','RX-8','Autre...'],
+  'McLaren': ['540C','570S','600LT','620R','650S','675LT','720S','750S','765LT','Artura','GT','P1','Senna','Autre...'],
+  'Mercedes': ['A 35 AMG','A 45 AMG','Classe A','Classe B','Classe C','Classe CLA','Classe CLS','Classe E','Classe G','Classe GLA','Classe GLB','Classe GLC','Classe GLE','Classe GLK','Classe GLS','Classe ML','Classe R','Classe S','Classe SL','Classe SLC','Classe SLK','C 43 AMG','C 63 AMG','E 43 AMG','E 53 AMG','E 63 AMG','EQA','EQB','EQC','EQE','EQS','EQV','G 63 AMG','GLA 35 AMG','GLC 43 AMG','GLE 43 AMG','GLE 53 AMG','GLE 63 AMG','GT AMG','S 63 AMG','Sprinter','V-Klasse','Viano','Vito','Autre...'],
+  'MG': ['3','4','5','6','EHS','Marvel R','ZS','Autre...'],
+  'Mini': ['Cabrio','Clubman','Countryman','Coupe','Hatch','John Cooper Works','Paceman','Roadster','Autre...'],
+  'Mitsubishi': ['ASX','Carisma','Colt','Eclipse Cross','Galant','L200','Lancer','Lancer Evolution','Outlander','Pajero','Pajero Sport','Space Star','Autre...'],
+  'Morgan': ['3 Wheeler','Plus 4','Plus 6','Roadster','Autre...'],
+  'Nissan': ['100NX','350Z','370Z','Ariya','GT-R','Juke','Leaf','Leaf e+','Micra','Murano','Navara','Note','Pathfinder','Patrol','Primera','Pulsar','Qashqai','Skyline','Terrano','Townstar','X-Trail','Autre...'],
+  'Opel': ['Adam','Agila','Antara','Astra','Astra OPC','Cascada','Corsa','Corsa-e','Crossland','Frontera','Grandland','Insignia','Kadett','Meriva','Mokka','Mokka-e','Omega','Signum','Vectra','Vivaro','Zafira','Zafira Life','Autre...'],
+  'Peugeot': ['1007','106','107','108','2008','205','206','207','208','208 GTi','3008','301','306','307','308','308 GTi','4007','4008','408','5008','508','508 SW','607','806','807','Boxer','e-208','e-2008','Expert','Partner','RCZ','Rifter','Traveller','Autre...'],
+  'Porsche': ['718 Boxster','718 Cayman','718 Spyder','911','911 Carrera','911 GT3','911 GT3 RS','911 Targa','911 Turbo','918 Spyder','944','968','Boxster','Cayenne','Cayenne Coupe','Cayenne Turbo','Cayman','Macan','Panamera','Taycan','Taycan Cross Turismo','Autre...'],
+  'RAM': ['1500','2500','3500','ProMaster','Autre...'],
+  'Renault': ['Alaskan','Alpine A110','Arkana','Austral','Captur','Clio','Clio RS','Espace','Express','Fluence','Kadjar','Kangoo','Koleos','Laguna','Latitude','Megane','Megane E-Tech','Megane RS','Modus','Rafale','Sandero','Scenic','Symbol','Talisman','Trafic','Twingo','Vel Satis','Zoe','Autre...'],
+  'Rolls-Royce': ['Cullinan','Dawn','Ghost','Phantom','Silver Shadow','Spectre','Wraith','Autre...'],
+  'Seat': ['Altea','Arona','Ateca','Cordoba','Exeo','Ibiza','Leon','Leon Cupra','Tarraco','Toledo','Autre...'],
+  'Skoda': ['Citigo','Enyaq','Enyaq Coupé','Fabia','Fabia RS','Karoq','Kodiaq','Kodiaq RS','Octavia','Octavia RS','Rapid','Scala','Superb','Yeti','Autre...'],
+  'Smart': ['#1','#3','EQ ForFour','EQ ForTwo','ForFour','ForTwo','Roadster','Autre...'],
+  'Subaru': ['BRZ','Forester','Impreza','Legacy','Levorg','Outback','WRX','WRX STI','XV','Autre...'],
+  'Suzuki': ['Alto','Baleno','Celerio','Grand Vitara','Ignis','Jimny','S-Cross','Splash','Swift','Swift Sport','SX4','Vitara','Wagon R+','Autre...'],
+  'Tesla': ['Cybertruck','Model 3','Model S','Model X','Model Y','Roadster','Semi','Autre...'],
+  'Toyota': ['4Runner','Auris','Avensis','Aygo','bZ4X','C-HR','Camry','Corolla','Corolla Cross','FJ Cruiser','GR86','GR Supra','GR Yaris','Hilux','Land Cruiser','Mirai','Prius','ProAce','RAV4','Sequoia','Supra','Tundra','Urban Cruiser','Verso','Yaris','Yaris Cross','Autre...'],
+  'Volkswagen': ['Amarok','Arteon','Beetle','Bora','Caddy','California','Caravelle','Fox','Golf','Golf GTI','Golf GTE','Golf R','Golf Sportsvan','ID.3','ID.4','ID.5','ID.7','Jetta','Lupo','Multivan','New Beetle','Passat','Phaeton','Polo','Polo GTI','Scirocco','Sharan','T-Cross','T-Roc','Tiguan','Tiguan Allspace','Touareg','Touran','Transporter','Up','Autre...'],
+  'Volvo': ['C30','C40','C70','S40','S60','S80','S90','V40','V50','V60','V70','V90','XC40','XC60','XC70','XC90','Autre...'],
+  'Autre...': []
 };
 
 function getMarquesList() {
