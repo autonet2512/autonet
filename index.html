@@ -919,6 +919,12 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     </div>
     <p style="font-size:12px;color:var(--texte-light);margin-bottom:8px;">Si coché, les acheteurs devront vous contacter uniquement via la messagerie AutoNet.</p>
     <div class="form-section-title">📷 Photos du véhicule</div>
+    <div style="background:var(--bleu-pale);border:1px solid var(--bleu-mid);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--bleu);margin-bottom:12px;line-height:1.6;">
+      💡 <strong>Badges visibles sur votre annonce :</strong><br>
+      • <strong>📷 X photos</strong> — affiché dès la première photo<br>
+      • <strong>✓ Dossier complet</strong> — apparaît à partir de 10 photos<br>
+      • <strong>🔧 Entretien complet</strong> — apparaît à partir de 3 interventions renseignées
+    </div>
     <div class="form-group">
       <label>Ajoutez jusqu'à 10 photos *</label>
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:10px;">
@@ -1251,7 +1257,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 <script>
 // ══════════════════════════════════════════════════
 // ⚠️ REMPLACEZ CES DEUX LIGNES AVEC VOS CLÉS SUPABASE
-const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co';
+const SUPABASE_URL = ' https://fifwkvhcvnuawbllbdvm.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
 // ══════════════════════════════════════════════════
 
@@ -1285,7 +1291,7 @@ function renderCard(a) {
         <span id="card-emoji-${a.id}">${a.type === 'Moto' ? '🏍️' : '🚗'}</span>
         ${estVendu ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:5;"><span style="background:#dc2626;color:#fff;font-family:Bricolage Grotesque,sans-serif;font-size:22px;font-weight:800;padding:10px 28px;border-radius:8px;letter-spacing:1px;transform:rotate(-10deg);">VENDU</span></div>' : ''}
         ${estSupprime ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:5;"><span style="background:#6b7280;color:#fff;font-family:Bricolage Grotesque,sans-serif;font-size:16px;font-weight:800;padding:8px 20px;border-radius:8px;letter-spacing:1px;">ANNONCE RETIRÉE</span></div>' : ''}
-        <div class="listing-badges"><span class="badge badge-vert">✓ Annonce complète</span></div>
+        <div class="listing-badges" id="badge-complet-${a.id}"></div>
         <div class="listing-img-count" id="card-count-${a.id}">📷 Photos</div>
       </div>
       <div class="listing-body">
@@ -1298,10 +1304,10 @@ function renderCard(a) {
           ${a.puissance ? '<span class="spec">⚡ ' + a.puissance + ' CH</span>' : ''}
           ${a.boite ? '<span class="spec">⚙️ ' + a.boite + '</span>' : ''}
         </div>
-        <div class="listing-docs">
-          <span class="doc-tag active">🔧 Entretien fourni</span>
-          <span class="doc-tag active">📄 Factures dispo</span>
-          <span class="doc-tag active">📷 10 photos</span>
+        <div class="listing-docs" id="docs-${a.id}">
+          <span class="doc-tag" id="badge-photos-${a.id}">📷 Photos</span>
+          <span class="doc-tag" id="badge-entretien-${a.id}">🔧 Entretien</span>
+          <span class="doc-tag" id="badge-vert-${a.id}" style="display:none;"></span>
         </div>
         <div class="listing-footer">
           <div class="listing-price">${Number(a.prix || 0).toLocaleString('fr-FR')} € <span>net vendeur</span></div>
@@ -1327,6 +1333,7 @@ async function chargerAccueilListings() {
     }
     container.innerHTML = data.map(renderCard).join('');
     setTimeout(() => chargerPhotosCards(data, 'page-accueil'), 100);
+    setTimeout(() => chargerBadgesEntretien(data, 'page-accueil'), 200);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement. Vérifiez vos clés Supabase.</p></div>`;
@@ -1350,6 +1357,17 @@ async function chargerPhotosCards(annonces, containerId) {
           if (imgEl) { imgEl.src = url; imgEl.style.display = 'block'; }
           if (emojiEl) emojiEl.style.display = 'none';
           if (countEl) countEl.textContent = `📷 ${files.length} photo${files.length > 1 ? 's' : ''}`;
+          // Update photo badge on card
+          const photoBadge = scope.querySelector(`#badge-photos-${a.id}`);
+          if (photoBadge) {
+            photoBadge.textContent = `📷 ${files.length} photo${files.length > 1 ? 's' : ''}`;
+            photoBadge.classList.add('active');
+          }
+          // Show "Dossier complet" badge if 10 photos
+          if (files.length >= 10) {
+            const badgeComplet = scope.querySelector(`#badge-complet-${a.id}`);
+            if (badgeComplet) badgeComplet.innerHTML = '<span class="badge badge-vert">✓ Dossier complet</span>';
+          }
         }
       }
     } catch(e) {}
@@ -1384,6 +1402,7 @@ async function chargerAnnonces(params = {}) {
     document.getElementById('annonces-titre').textContent = `${data.length} véhicule${data.length > 1 ? 's' : ''} disponible${data.length > 1 ? 's' : ''}`;
     container.innerHTML = data.map(renderCard).join('');
     setTimeout(() => chargerPhotosCards(data, 'page-annonces'), 100);
+    setTimeout(() => chargerBadgesEntretien(data, 'page-annonces'), 200);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement.</p></div>`;
@@ -1540,6 +1559,29 @@ async function voirDetail(id) {
     `;
   } catch(e) {
     console.error(e);
+  }
+}
+
+// ── CHARGER BADGES ENTRETIEN CARDS ──
+async function chargerBadgesEntretien(annonces, containerId) {
+  const scope = containerId ? document.getElementById(containerId) : document;
+  if (!scope) return;
+  for (const a of annonces) {
+    try {
+      const { count } = await db.from('entretiens').select('id', { count: 'exact', head: true }).eq('annonce_id', a.id);
+      const badge = scope.querySelector(`#badge-entretien-${a.id}`);
+      if (badge) {
+        if (count >= 3) {
+          badge.textContent = '🔧 Entretien complet';
+          badge.classList.add('active');
+        } else if (count > 0) {
+          badge.textContent = `🔧 ${count} entretien${count > 1 ? 's' : ''}`;
+          badge.classList.remove('active');
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    } catch(e) {}
   }
 }
 
