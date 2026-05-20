@@ -1038,13 +1038,95 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <h2 class="auth-title">Créer un compte</h2>
       <p class="auth-sub">Gratuit et sans engagement.</p>
       <div id="inscription-alert"></div>
-      <div class="form-group"><label>Prénom</label><input type="text" id="i-prenom" placeholder="Votre prénom"></div>
-      <div class="form-group"><label>Email</label><input type="email" id="i-email" placeholder="votre@email.com"></div>
-      <div class="form-group"><label>Mot de passe</label><input type="password" id="i-mdp" placeholder="Minimum 6 caractères"></div>
+      
+      <!-- Type de compte -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+        <div id="btn-particulier" onclick="switchTypeCompte('particulier')" style="border:2px solid var(--bleu);background:var(--bleu-pale);border-radius:10px;padding:14px;text-align:center;cursor:pointer;">
+          <div style="font-size:24px;margin-bottom:4px;">👤</div>
+          <div style="font-weight:700;font-size:14px;color:var(--bleu);">Particulier</div>
+          <div style="font-size:11px;color:var(--texte-muted);">Gratuit</div>
+        </div>
+        <div id="btn-pro" onclick="switchTypeCompte('pro')" style="border:2px solid var(--border);background:var(--fond);border-radius:10px;padding:14px;text-align:center;cursor:pointer;">
+          <div style="font-size:24px;margin-bottom:4px;">🏢</div>
+          <div style="font-weight:700;font-size:14px;color:var(--texte-muted);">Professionnel</div>
+          <div style="font-size:11px;color:var(--texte-muted);">Garage, concessionnaire</div>
+        </div>
+      </div>
+      <input type="hidden" id="i-type-compte" value="particulier">
+
+      <div class="form-group"><label>Prénom *</label><input type="text" id="i-prenom" placeholder="Votre prénom"></div>
+      
+      <!-- Champs Pro -->
+      <div id="champs-pro" style="display:none;">
+        <div class="form-group"><label>Raison sociale *</label><input type="text" id="i-raison-sociale" placeholder="Ex : Garage Dupont SARL"></div>
+        <div class="form-group"><label>Numéro SIRET *</label><input type="text" id="i-siret" placeholder="Ex : 123 456 789 00012" maxlength="17"></div>
+        <div class="form-group"><label>Adresse professionnelle</label><input type="text" id="i-adresse-pro" placeholder="Ex : 12 rue de la Paix, Lyon"></div>
+        <div class="form-group"><label>Téléphone professionnel</label><input type="tel" id="i-tel-pro" placeholder="Ex : 04 78 12 34 56"></div>
+      </div>
+
+      <div class="form-group"><label>Email *</label><input type="email" id="i-email" placeholder="votre@email.com"></div>
+      <div class="form-group"><label>Mot de passe *</label><input type="password" id="i-mdp" placeholder="Minimum 6 caractères"></div>
       <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px;" onclick="sInscrire()">Créer mon compte</button>
       <div class="auth-switch">Déjà un compte ? <a onclick="showPage('connexion')">Se connecter</a></div>
     </div>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE MODIFIER ANNONCE -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-modifier" class="page">
+  <section class="form-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="section-eyebrow">Mon espace</div>
+        <h2 class="form-title" style="margin-bottom:0;">Modifier mon annonce</h2>
+      </div>
+      <button onclick="showPage('dashboard')" class="btn btn-outline">← Retour</button>
+    </div>
+    <div id="modifier-alert"></div>
+    <div class="form-section-title">🚗 Informations du véhicule</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Marque *</label><input type="text" id="m-marque" placeholder="Ex : Renault"></div>
+      <div class="form-group"><label>Modèle *</label><input type="text" id="m-modele" placeholder="Ex : Clio"></div>
+      <div class="form-group"><label>Année *</label><input type="number" id="m-annee" placeholder="Ex : 2020"></div>
+      <div class="form-group"><label>Kilométrage *</label><input type="number" id="m-km" placeholder="Ex : 45000"></div>
+      <div class="form-group"><label>Prix (€) *</label><input type="number" id="m-prix" placeholder="Ex : 12000"></div>
+      <div class="form-group"><label>Carburant *</label>
+        <select id="m-carburant">
+          <option value="">Sélectionner</option>
+          <option>Essence</option><option>Diesel</option><option>Hybride</option><option>Électrique</option><option>GPL</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Puissance (CH)</label><input type="number" id="m-puissance" placeholder="Ex : 150"></div>
+      <div class="form-group"><label>Boîte de vitesses</label>
+        <select id="m-boite">
+          <option value="">Sélectionner</option>
+          <option>Manuelle</option><option>Automatique</option><option>Séquentielle</option><option>CVT</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Finition <span style="font-size:12px;color:var(--texte-light);font-weight:400;">(optionnel)</span></label>
+      <input type="text" id="m-finition" placeholder="Ex : S Line, GTI, RS, Sport...">
+    </div>
+    <div class="form-group"><label>Type de véhicule *</label>
+      <select id="m-type"><option value="">Sélectionner</option><option>Voiture</option><option>Moto</option><option>Utilitaire</option></select>
+    </div>
+    <div class="form-group"><label>Localisation (Ville) *</label><input type="text" id="m-localisation" placeholder="Ex : Lyon"></div>
+    <div class="form-group"><label>Description</label><textarea id="m-description" placeholder="Décrivez votre véhicule..."></textarea></div>
+    <div class="form-group"><label>Prix (€) *</label></div>
+    <div class="form-section-title">📞 Coordonnées</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Votre prénom *</label><input type="text" id="m-prenom" placeholder="Ex : Jean-Marie"></div>
+      <div class="form-group"><label>Votre téléphone</label><input type="tel" id="m-tel" placeholder="Ex : 06 12 34 56 78"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--fond);border:1.5px solid var(--border);border-radius:9px;margin-bottom:16px;">
+      <input type="checkbox" id="m-masquer-tel" style="width:18px;height:18px;cursor:pointer;accent-color:var(--bleu);">
+      <label for="m-masquer-tel" style="font-size:14px;font-weight:500;cursor:pointer;">🔒 Ne pas afficher mon numéro de téléphone publiquement</label>
+    </div>
+    <input type="hidden" id="m-annonce-id">
+    <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:12px;" onclick="sauvegarderModification()">💾 Sauvegarder les modifications</button>
+  </section>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -1257,7 +1339,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 <script>
 // ══════════════════════════════════════════════════
 // ⚠️ REMPLACEZ CES DEUX LIGNES AVEC VOS CLÉS SUPABASE
-const SUPABASE_URL = ' https://fifwkvhcvnuawbllbdvm.supabase.co';
+const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
 // ══════════════════════════════════════════════════
 
@@ -1295,7 +1377,7 @@ function renderCard(a) {
         <div class="listing-img-count" id="card-count-${a.id}">📷 Photos</div>
       </div>
       <div class="listing-body">
-        <div class="listing-make">${a.marque || ''}</div>
+        <div class="listing-make">${a.marque || ''} ${a.type_vendeur === 'pro' ? '<span style="background:var(--bleu);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;vertical-align:middle;">PRO</span>' : ''}</div>
         <div class="listing-name">${a.modele || ''}</div>
         <div class="listing-specs">
           <span class="spec">📅 ${a.annee || ''}</span>
@@ -1334,6 +1416,7 @@ async function chargerAccueilListings() {
     container.innerHTML = data.map(renderCard).join('');
     setTimeout(() => chargerPhotosCards(data, 'page-accueil'), 100);
     setTimeout(() => chargerBadgesEntretien(data, 'page-accueil'), 200);
+    setTimeout(() => chargerBadgesCT(data, 'page-accueil'), 300);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement. Vérifiez vos clés Supabase.</p></div>`;
@@ -1403,6 +1486,7 @@ async function chargerAnnonces(params = {}) {
     container.innerHTML = data.map(renderCard).join('');
     setTimeout(() => chargerPhotosCards(data, 'page-annonces'), 100);
     setTimeout(() => chargerBadgesEntretien(data, 'page-annonces'), 200);
+    setTimeout(() => chargerBadgesCT(data, 'page-annonces'), 300);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement.</p></div>`;
@@ -1559,6 +1643,36 @@ async function voirDetail(id) {
     `;
   } catch(e) {
     console.error(e);
+  }
+}
+
+// ── CHARGER BADGE CT ──
+async function chargerBadgesCT(annonces, containerId) {
+  const scope = containerId ? document.getElementById(containerId) : document;
+  if (!scope) return;
+  const sixMoisAgo = new Date();
+  sixMoisAgo.setMonth(sixMoisAgo.getMonth() - 6);
+  
+  for (const a of annonces) {
+    try {
+      const { data: cts } = await db.from('controles')
+        .select('date, resultat')
+        .eq('annonce_id', a.id)
+        .order('date', { ascending: false })
+        .limit(1);
+      
+      if (cts && cts.length > 0) {
+        const dernierCT = cts[0];
+        const dateCT = new Date(dernierCT.date);
+        const estRecent = dateCT >= sixMoisAgo;
+        const estFavorable = dernierCT.resultat === 'Favorable';
+        const badgeComplet = scope.querySelector(`#badge-complet-${a.id}`);
+        if (badgeComplet && estRecent && estFavorable) {
+          const currentHtml = badgeComplet.innerHTML;
+          badgeComplet.innerHTML = currentHtml + '<span class="badge" style="background:rgba(5,150,105,0.9);color:#fff;">✅ CT -6 mois</span>';
+        }
+      }
+    } catch(e) {}
   }
 }
 
@@ -2177,13 +2291,33 @@ async function sInscrire() {
   const prenom = document.getElementById('i-prenom').value.trim();
   const email = document.getElementById('i-email').value.trim();
   const mdp = document.getElementById('i-mdp').value;
-  if (!prenom || !email || !mdp) { alertEl.innerHTML = '<div class="alert alert-error">Remplissez tous les champs.</div>'; return; }
+  const typeCompte = document.getElementById('i-type-compte') ? document.getElementById('i-type-compte').value : 'particulier';
+
+  if (!prenom || !email || !mdp) { alertEl.innerHTML = '<div class="alert alert-error">Remplissez tous les champs obligatoires.</div>'; return; }
+
+  // Validate pro fields
+  if (typeCompte === 'pro') {
+    const siret = document.getElementById('i-siret').value.trim();
+    const raisonSociale = document.getElementById('i-raison-sociale').value.trim();
+    if (!siret || !raisonSociale) { alertEl.innerHTML = '<div class="alert alert-error">Remplissez la raison sociale et le SIRET.</div>'; return; }
+    const siretClean = siret.replace(/\s/g, '');
+    if (siretClean.length !== 14) { alertEl.innerHTML = '<div class="alert alert-error">Le numéro SIRET doit contenir 14 chiffres.</div>'; return; }
+  }
+
   try {
-    const { data, error } = await db.auth.signUp({ email, password: mdp, options: { data: { prenom } } });
+    const metadata = {
+      prenom,
+      type_compte: typeCompte,
+      raison_sociale: typeCompte === 'pro' ? document.getElementById('i-raison-sociale').value.trim() : null,
+      siret: typeCompte === 'pro' ? document.getElementById('i-siret').value.replace(/\s/g, '') : null,
+      adresse_pro: typeCompte === 'pro' ? document.getElementById('i-adresse-pro').value.trim() : null,
+      tel_pro: typeCompte === 'pro' ? document.getElementById('i-tel-pro').value.trim() : null,
+    };
+    const { data, error } = await db.auth.signUp({ email, password: mdp, options: { data: metadata } });
     if (error) throw error;
-    alertEl.innerHTML = '<div class="alert alert-success">✅ Compte créé ! Vérifiez votre email pour confirmer.</div>';
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Compte ' + (typeCompte === 'pro' ? 'professionnel' : '') + ' créé ! Vérifiez votre email pour confirmer.</div>';
   } catch(e) {
-    alertEl.innerHTML = `<div class="alert alert-error">❌ ${e.message}</div>`;
+    alertEl.innerHTML = '<div class="alert alert-error">❌ ' + e.message + '</div>';
   }
 }
 
@@ -2241,6 +2375,7 @@ async function chargerDashboard() {
         ' ' + statutBadge + '</div></div>' +
         '<div class="dashboard-actions">' +
         '<button class="btn btn-outline" onclick="voirDetail(' + a.id + ');showPage(\'detail\')">Voir</button>' +
+        (!estVendu && !estPending ? '<button class="btn btn-outline" style="color:var(--bleu);" onclick="modifierAnnonce(' + a.id + ')">✏️ Modifier</button>' : '') +
         (estVendu ? '<button class="btn btn-outline" style="color:var(--bleu);" onclick="imprimerAnnonce(' + a.id + ')">🖨️</button>' : '') +
         btnSupprimer + '</div></div>';
     }).join('');
@@ -2648,6 +2783,105 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') lightboxNav(-1);
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
+
+// ── TYPE DE COMPTE ──
+function switchTypeCompte(type) {
+  document.getElementById('i-type-compte').value = type;
+  const btnPart = document.getElementById('btn-particulier');
+  const btnPro = document.getElementById('btn-pro');
+  const champsPro = document.getElementById('champs-pro');
+  
+  if (type === 'pro') {
+    btnPro.style.border = '2px solid var(--bleu)';
+    btnPro.style.background = 'var(--bleu-pale)';
+    btnPro.querySelector('div:nth-child(2)').style.color = 'var(--bleu)';
+    btnPart.style.border = '2px solid var(--border)';
+    btnPart.style.background = 'var(--fond)';
+    btnPart.querySelector('div:nth-child(2)').style.color = 'var(--texte-muted)';
+    champsPro.style.display = 'block';
+  } else {
+    btnPart.style.border = '2px solid var(--bleu)';
+    btnPart.style.background = 'var(--bleu-pale)';
+    btnPart.querySelector('div:nth-child(2)').style.color = 'var(--bleu)';
+    btnPro.style.border = '2px solid var(--border)';
+    btnPro.style.background = 'var(--fond)';
+    btnPro.querySelector('div:nth-child(2)').style.color = 'var(--texte-muted)';
+    champsPro.style.display = 'none';
+  }
+}
+
+// ── MODIFIER ANNONCE ──
+async function modifierAnnonce(id) {
+  showPage('modifier');
+  document.getElementById('m-annonce-id').value = id;
+  document.getElementById('modifier-alert').innerHTML = '';
+  try {
+    const { data, error } = await db.from('annonces').select('*').eq('id', id).single();
+    if (error) throw error;
+    document.getElementById('m-marque').value = data.marque || '';
+    document.getElementById('m-modele').value = data.modele || '';
+    document.getElementById('m-annee').value = data.annee || '';
+    document.getElementById('m-km').value = data.kilometrage || '';
+    document.getElementById('m-prix').value = data.prix || '';
+    document.getElementById('m-carburant').value = data.carburant || '';
+    document.getElementById('m-puissance').value = data.puissance || '';
+    document.getElementById('m-boite').value = data.boite || '';
+    document.getElementById('m-finition').value = data.finition || '';
+    document.getElementById('m-type').value = data.type || '';
+    document.getElementById('m-localisation').value = data.localisation || '';
+    document.getElementById('m-description').value = data.description || '';
+    document.getElementById('m-prenom').value = data.prenom || '';
+    document.getElementById('m-tel').value = data.telephone || '';
+    document.getElementById('m-masquer-tel').checked = data.masquer_tel || false;
+  } catch(e) {
+    document.getElementById('modifier-alert').innerHTML = '<div class="alert alert-error">❌ Erreur de chargement.</div>';
+  }
+}
+
+async function sauvegarderModification() {
+  const alertEl = document.getElementById('modifier-alert');
+  const id = document.getElementById('m-annonce-id').value;
+  const marque = document.getElementById('m-marque').value.trim();
+  const modele = document.getElementById('m-modele').value.trim();
+  const annee = document.getElementById('m-annee').value;
+  const km = document.getElementById('m-km').value;
+  const prix = document.getElementById('m-prix').value;
+  const carburant = document.getElementById('m-carburant').value;
+  const type = document.getElementById('m-type').value;
+  const localisation = document.getElementById('m-localisation').value.trim();
+
+  if (!marque || !modele || !annee || !km || !prix || !carburant || !type || !localisation) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Veuillez remplir tous les champs obligatoires.</div>';
+    return;
+  }
+
+  const masquerTel = document.getElementById('m-masquer-tel').checked;
+
+  try {
+    const { error } = await db.from('annonces').update({
+      marque, modele,
+      annee: parseInt(annee),
+      kilometrage: parseInt(km),
+      prix: parseInt(prix),
+      carburant,
+      type,
+      localisation,
+      description: document.getElementById('m-description').value.trim(),
+      prenom: document.getElementById('m-prenom').value.trim(),
+      telephone: masquerTel ? null : document.getElementById('m-tel').value.trim(),
+      masquer_tel: masquerTel,
+      puissance: document.getElementById('m-puissance').value ? parseInt(document.getElementById('m-puissance').value) : null,
+      boite: document.getElementById('m-boite').value || null,
+      finition: document.getElementById('m-finition').value.trim() || null,
+    }).eq('id', id);
+
+    if (error) throw error;
+    alertEl.innerHTML = '<div class="alert alert-success">✅ Annonce modifiée avec succès !</div>';
+    setTimeout(() => showPage('dashboard'), 1500);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error">❌ Erreur : ' + e.message + '</div>';
+  }
+}
 
 // ── IMPRESSION ANNONCE ARCHIVÉE ──
 async function imprimerAnnonce(id) {
