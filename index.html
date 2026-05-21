@@ -2863,7 +2863,7 @@ async function chargerMediasModifier(id) {
         entretiens.map(e => 
           '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--fond);border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:13px;">' +
           '<div><strong>' + (e.travaux || '') + '</strong> · ' + (e.date ? new Date(e.date).toLocaleDateString('fr-FR') : '') + (e.garage ? ' · ' + e.garage : '') + (e.montant ? ' · ' + e.montant + ' €' : '') + '</div>' +
-          '<button onclick="supprimerEntretien(' + e.id + ',this)" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;">🗑️</button>' +
+          '<button data-id="' + e.id + '" data-type="entretien" onclick="this.dataset.type=\'entretien\';supprimerItemModifier(this)" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;">🗑️</button>' +
           '</div>'
         ).join('');
     }
@@ -2878,7 +2878,7 @@ async function chargerMediasModifier(id) {
         cts.map(ct => 
           '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--fond);border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:13px;">' +
           '<div>' + (ct.resultat || '') + ' · ' + (ct.date ? new Date(ct.date).toLocaleDateString('fr-FR') : '') + (ct.centre ? ' · ' + ct.centre : '') + '</div>' +
-          '<button onclick="supprimerCT(' + ct.id + ',this)" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;">🗑️</button>' +
+          '<button data-id="' + ct.id + '" data-type="ct" onclick="supprimerItemModifier(this)" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;">🗑️</button>' +
           '</div>'
         ).join('');
     }
@@ -2895,18 +2895,14 @@ async function supprimerFichierModifier(btn, bucket) {
   } catch(e) { alert('Erreur suppression'); }
 }
 
-async function supprimerEntretien(id, btn) {
-  if (!confirm('Supprimer cette intervention ?')) return;
+async function supprimerItemModifier(btn) {
+  const id = btn.dataset.id;
+  const type = btn.dataset.type;
+  const table = type === 'ct' ? 'controles' : 'entretiens';
+  const msg = type === 'ct' ? 'Supprimer ce CT ?' : 'Supprimer cette intervention ?';
+  if (!confirm(msg)) return;
   try {
-    await db.from('entretiens').delete().eq('id', id);
-    btn.parentElement.remove();
-  } catch(e) { alert('Erreur suppression'); }
-}
-
-async function supprimerCT(id, btn) {
-  if (!confirm('Supprimer ce CT ?')) return;
-  try {
-    await db.from('controles').delete().eq('id', id);
+    await db.from(table).delete().eq('id', id);
     btn.parentElement.remove();
   } catch(e) { alert('Erreur suppression'); }
 }
@@ -3072,6 +3068,15 @@ async function sauvegarderModification() {
       if (!dateVal && !resultat) continue;
       await db.from('controles').insert([{ annonce_id: parseInt(id), date: dateVal || null, resultat, centre, kilometrage: kmCt ? parseInt(kmCt) : null }]);
     }
+
+    // Reset file inputs to prevent re-upload
+    ['m-photos', 'm-defauts'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('m-entretien-items').innerHTML = '';
+    document.getElementById('m-ct-items').innerHTML = '';
+    document.getElementById('m-photos-preview') && (document.getElementById('m-photos-preview').innerHTML = '');
 
     alertEl.innerHTML = '<div class="alert alert-success">✅ Annonce modifiée avec succès !</div>';
     setTimeout(() => showPage('dashboard'), 1500);
