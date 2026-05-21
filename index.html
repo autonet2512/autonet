@@ -1125,6 +1125,40 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <label for="m-masquer-tel" style="font-size:14px;font-weight:500;cursor:pointer;">🔒 Ne pas afficher mon numéro de téléphone publiquement</label>
     </div>
     <input type="hidden" id="m-annonce-id">
+
+    <!-- PHOTOS ACTUELLES -->
+    <div class="form-section-title">📷 Photos du véhicule</div>
+    <p style="font-size:13px;color:var(--texte-muted);margin-bottom:12px;">Photos actuelles de l'annonce :</p>
+    <div id="m-photos-actuelles" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+    <div class="form-group">
+      <label>Ajouter de nouvelles photos</label>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;">
+        ⚠️ Pensez à flouter ou cacher votre plaque d'immatriculation avant d'uploader.
+      </div>
+      <input type="file" id="m-photos" accept="image/*" multiple onchange="previewPhotos(this)" style="background:var(--blanc);border:2px dashed var(--bleu);color:var(--texte);padding:16px;border-radius:9px;font-size:14px;width:100%;cursor:pointer;">
+      <div id="m-photos-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
+    </div>
+
+    <!-- ÉTAT CARROSSERIE -->
+    <div class="form-section-title">🔍 État carrosserie</div>
+    <div id="m-defauts-actuels" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+    <div class="form-group">
+      <label>Ajouter des photos de défauts</label>
+      <input type="file" id="m-defauts" accept="image/*" multiple style="background:var(--blanc);border:2px dashed #f59e0b;color:var(--texte);padding:16px;border-radius:9px;font-size:14px;width:100%;cursor:pointer;">
+    </div>
+
+    <!-- ENTRETIEN -->
+    <div class="form-section-title">🔧 Entretien & Factures</div>
+    <div id="m-entretiens-actuels" style="margin-bottom:16px;"></div>
+    <div id="m-entretien-items"></div>
+    <button type="button" class="btn btn-outline" onclick="ajouterEntretienModifier()" style="margin-bottom:24px;">+ Ajouter une intervention</button>
+
+    <!-- CT -->
+    <div class="form-section-title">✅ Contrôle Technique</div>
+    <div id="m-ct-actuels" style="margin-bottom:16px;"></div>
+    <div id="m-ct-items"></div>
+    <button type="button" class="btn btn-outline" onclick="ajouterCTModifier()" style="margin-bottom:24px;">+ Ajouter un CT</button>
+
     <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:12px;" onclick="sauvegarderModification()">💾 Sauvegarder les modifications</button>
   </section>
 </div>
@@ -2784,6 +2818,127 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
 
+// ── MODIFIER - CHARGER MÉDIAS EXISTANTS ──
+async function chargerMediasModifier(id) {
+  // Photos
+  try {
+    const { data: photos } = await db.storage.from('photos').list(String(id));
+    const container = document.getElementById('m-photos-actuelles');
+    if (container && photos && photos.length > 0) {
+      const validPhotos = photos.filter(f => f.name && !f.name.startsWith('.'));
+      container.innerHTML = validPhotos.map(f => {
+        const url = db.storage.from('photos').getPublicUrl(`${id}/${f.name}`).data.publicUrl;
+        return '<div style="position:relative;display:inline-block;">' +
+          '<img src="' + url + '" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);">' +
+          '<button data-annonce="' + id + '" data-file="' + f.name + '" onclick="supprimerFichierModifier(this,\'photos\')" style="position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;">×</button>' +
+          '</div>';
+      }).join('');
+    } else if (container) {
+      container.innerHTML = '<p style="font-size:13px;color:var(--texte-light);">Aucune photo.</p>';
+    }
+  } catch(e) {}
+
+  // Défauts
+  try {
+    const { data: defauts } = await db.storage.from('defauts').list(String(id));
+    const container = document.getElementById('m-defauts-actuels');
+    if (container && defauts && defauts.length > 0) {
+      const validDefauts = defauts.filter(f => f.name && !f.name.startsWith('.'));
+      container.innerHTML = validDefauts.map(f => {
+        const url = db.storage.from('defauts').getPublicUrl(`${id}/${f.name}`).data.publicUrl;
+        return '<div style="position:relative;display:inline-block;margin-right:8px;">' +
+          '<img src="' + url + '" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1.5px solid #fde68a;">' +
+          '<button data-annonce="' + id + '" data-file="' + f.name + '" onclick="supprimerFichierModifier(this,\'defauts\')" style="position:absolute;top:-6px;right:-6px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;">×</button>' +
+          '</div>';
+      }).join('');
+    }
+  } catch(e) {}
+
+  // Entretiens
+  try {
+    const { data: entretiens } = await db.from('entretiens').select('*').eq('annonce_id', id).order('date', { ascending: false });
+    const container = document.getElementById('m-entretiens-actuels');
+    if (container && entretiens && entretiens.length > 0) {
+      container.innerHTML = '<p style="font-size:13px;font-weight:600;margin-bottom:10px;">Interventions existantes :</p>' +
+        entretiens.map(e => 
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--fond);border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:13px;">' +
+          '<div><strong>' + (e.travaux || '') + '</strong> · ' + (e.date ? new Date(e.date).toLocaleDateString('fr-FR') : '') + (e.garage ? ' · ' + e.garage : '') + (e.montant ? ' · ' + e.montant + ' €' : '') + '</div>' +
+          '<button onclick="supprimerEntretien(' + e.id + ',this)" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;">🗑️</button>' +
+          '</div>'
+        ).join('');
+    }
+  } catch(e) {}
+
+  // CT
+  try {
+    const { data: cts } = await db.from('controles').select('*').eq('annonce_id', id).order('date', { ascending: false });
+    const container = document.getElementById('m-ct-actuels');
+    if (container && cts && cts.length > 0) {
+      container.innerHTML = '<p style="font-size:13px;font-weight:600;margin-bottom:10px;">CT existants :</p>' +
+        cts.map(ct => 
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--fond);border:1.5px solid var(--border);border-radius:8px;margin-bottom:8px;font-size:13px;">' +
+          '<div>' + (ct.resultat || '') + ' · ' + (ct.date ? new Date(ct.date).toLocaleDateString('fr-FR') : '') + (ct.centre ? ' · ' + ct.centre : '') + '</div>' +
+          '<button onclick="supprimerCT(' + ct.id + ',this)" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;">🗑️</button>' +
+          '</div>'
+        ).join('');
+    }
+  } catch(e) {}
+}
+
+async function supprimerFichierModifier(btn, bucket) {
+  const annonceId = btn.dataset.annonce;
+  const fileName = btn.dataset.file;
+  const bucketName = bucket || btn.dataset.bucket || 'photos';
+  try {
+    await db.storage.from(bucketName).remove([`${annonceId}/${fileName}`]);
+    btn.parentElement.remove();
+  } catch(e) { alert('Erreur suppression'); }
+}
+
+async function supprimerEntretien(id, btn) {
+  if (!confirm('Supprimer cette intervention ?')) return;
+  try {
+    await db.from('entretiens').delete().eq('id', id);
+    btn.parentElement.remove();
+  } catch(e) { alert('Erreur suppression'); }
+}
+
+async function supprimerCT(id, btn) {
+  if (!confirm('Supprimer ce CT ?')) return;
+  try {
+    await db.from('controles').delete().eq('id', id);
+    btn.parentElement.remove();
+  } catch(e) { alert('Erreur suppression'); }
+}
+
+function ajouterEntretienModifier() {
+  const container = document.getElementById('m-entretien-items');
+  const div = document.createElement('div');
+  div.style.cssText = 'background:var(--fond);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;position:relative;';
+  div.innerHTML = '<button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--texte-light);font-size:18px;cursor:pointer;">×</button>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Travaux effectués</label><input type="text" class="m-travaux" placeholder="Ex : Vidange"></div>' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Montant (€)</label><input type="number" class="m-montant" placeholder="Ex : 120"></div>' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Garage</label><input type="text" class="m-garage" placeholder="Ex : Renault Lyon"></div>' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Date</label><input type="date" class="m-date-entretien"></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
+function ajouterCTModifier() {
+  const container = document.getElementById('m-ct-items');
+  const div = document.createElement('div');
+  div.style.cssText = 'background:var(--fond);border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;position:relative;';
+  div.innerHTML = '<button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--texte-light);font-size:18px;cursor:pointer;">×</button>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Date du CT</label><input type="date" class="m-date-ct"></div>' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Résultat</label><select class="m-resultat-ct" style="background:var(--blanc);border:1.5px solid var(--border);padding:10px;border-radius:8px;font-size:14px;width:100%;"><option value="Favorable">✅ Favorable</option><option value="Défaillance mineure">⚠️ Défaillance mineure</option><option value="Défaillance majeure">❌ Défaillance majeure</option></select></div>' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Centre</label><input type="text" class="m-centre-ct" placeholder="Ex : Autosur Lyon"></div>' +
+    '<div class="form-group" style="margin-bottom:8px;"><label style="font-size:12px;">Kilométrage</label><input type="number" class="m-km-ct" placeholder="Ex : 45000"></div>' +
+    '</div>';
+  container.appendChild(div);
+}
+
 // ── TYPE DE COMPTE ──
 function switchTypeCompte(type) {
   document.getElementById('i-type-compte').value = type;
@@ -2833,6 +2988,8 @@ async function modifierAnnonce(id) {
     document.getElementById('m-prenom').value = data.prenom || '';
     document.getElementById('m-tel').value = data.telephone || '';
     document.getElementById('m-masquer-tel').checked = data.masquer_tel || false;
+    // Load existing medias
+    await chargerMediasModifier(id);
   } catch(e) {
     document.getElementById('modifier-alert').innerHTML = '<div class="alert alert-error">❌ Erreur de chargement.</div>';
   }
@@ -2876,6 +3033,46 @@ async function sauvegarderModification() {
     }).eq('id', id);
 
     if (error) throw error;
+
+    // Upload new photos
+    const newPhotos = document.getElementById('m-photos') ? Array.from(document.getElementById('m-photos').files) : [];
+    for (let i = 0; i < newPhotos.length; i++) {
+      const file = newPhotos[i];
+      const ext = file.name.split('.').pop();
+      await db.storage.from('photos').upload(`${id}/${Date.now()}_${i}.${ext}`, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+    }
+
+    // Upload new defauts
+    const newDefauts = document.getElementById('m-defauts') ? Array.from(document.getElementById('m-defauts').files) : [];
+    for (let i = 0; i < newDefauts.length; i++) {
+      const file = newDefauts[i];
+      const ext = file.name.split('.').pop();
+      await db.storage.from('defauts').upload(`${id}/${Date.now()}_${i}.${ext}`, file, { cacheControl: '3600', upsert: false, contentType: file.type });
+    }
+
+    // Save new entretiens
+    const entretienItems = document.querySelectorAll('#m-entretien-items .form-group, #m-entretien-items > div');
+    const newEntretiens = document.getElementById('m-entretien-items').children;
+    for (const item of newEntretiens) {
+      const travaux = item.querySelector('.m-travaux') ? item.querySelector('.m-travaux').value.trim() : '';
+      if (!travaux) continue;
+      const montant = item.querySelector('.m-montant') ? item.querySelector('.m-montant').value : '';
+      const garage = item.querySelector('.m-garage') ? item.querySelector('.m-garage').value.trim() : '';
+      const dateVal = item.querySelector('.m-date-entretien') ? item.querySelector('.m-date-entretien').value : '';
+      await db.from('entretiens').insert([{ annonce_id: parseInt(id), travaux, montant: montant ? parseInt(montant) : null, garage, date: dateVal || null }]);
+    }
+
+    // Save new CTs
+    const newCTs = document.getElementById('m-ct-items').children;
+    for (const item of newCTs) {
+      const dateVal = item.querySelector('.m-date-ct') ? item.querySelector('.m-date-ct').value : '';
+      const resultat = item.querySelector('.m-resultat-ct') ? item.querySelector('.m-resultat-ct').value : '';
+      const centre = item.querySelector('.m-centre-ct') ? item.querySelector('.m-centre-ct').value.trim() : '';
+      const kmCt = item.querySelector('.m-km-ct') ? item.querySelector('.m-km-ct').value : '';
+      if (!dateVal && !resultat) continue;
+      await db.from('controles').insert([{ annonce_id: parseInt(id), date: dateVal || null, resultat, centre, kilometrage: kmCt ? parseInt(kmCt) : null }]);
+    }
+
     alertEl.innerHTML = '<div class="alert alert-success">✅ Annonce modifiée avec succès !</div>';
     setTimeout(() => showPage('dashboard'), 1500);
   } catch(e) {
