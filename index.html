@@ -894,6 +894,15 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <select id="f-type"><option value="">Sélectionner</option><option>Voiture</option><option>Moto</option><option>Utilitaire</option></select>
     </div>
     <div class="form-group">
+      <label>Plaque d'immatriculation <span style="font-size:12px;color:var(--texte-light);font-weight:400;">(optionnel)</span></label>
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <input type="text" id="f-plaque" placeholder="Ex : AB-123-CD" style="text-transform:uppercase;letter-spacing:2px;font-weight:700;" oninput="this.value=this.value.toUpperCase()">
+        <button type="button" class="btn btn-outline" onclick="rechercherPlaque()" style="white-space:nowrap;padding:11px 16px;">🔍 Pré-remplir</button>
+      </div>
+      <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">Votre plaque ne sera pas affichée publiquement. Elle sert uniquement à pré-remplir les informations du véhicule.</p>
+      <div id="plaque-alert" style="margin-top:8px;"></div>
+    </div>
+    <div class="form-group">
       <label>Finition <span style="font-size:12px;color:var(--texte-light);font-weight:400;">(optionnel)</span></label>
       <input type="text" id="f-finition" placeholder="Ex : S Line, GTI, RS, Sport, Luxury, Business...">
       <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">La finition précise le niveau d'équipement du véhicule.</p>
@@ -1587,7 +1596,9 @@ async function voirDetail(id) {
       }
     }
 
-    document.getElementById('detail-vendeur').innerHTML = `${data.prenom || 'Vendeur'} · ${data.localisation || ''}<br><span style="color:var(--texte-light)">${data.email || ''}</span>${data.telephone ? `<br>${data.telephone}` : ''}`;
+    const vendeurVerifie = data.email_verifie === true;
+    const badgeVerifie = vendeurVerifie ? ' <span style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">✓ Profil vérifié</span>' : '';
+    document.getElementById('detail-vendeur').innerHTML = (data.prenom || 'Vendeur') + badgeVerifie + ' · ' + (data.localisation || '') + '<br><span style="color:var(--texte-light)">' + (data.email || '') + '</span>' + (data.telephone ? '<br>' + data.telephone : '');
     // Load photos
     const { data: photoFiles } = await db.storage.from('photos').list(String(id));
     const mainImg = document.getElementById('detail-main-img');
@@ -2208,6 +2219,7 @@ async function publierAnnonce() {
       puissance: puissance ? parseInt(puissance) : null,
       boite: boite || null,
       finition: finition || null,
+      email_verifie: currentUser ? (currentUser.email_confirmed_at !== null) : false,
       options: optionsSelectionnees.length > 0 ? optionsSelectionnees.join('|') : null
     }]).select().single();
     if (error) throw error;
@@ -2817,6 +2829,72 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') lightboxNav(-1);
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
+
+// ── RECHERCHE PAR PLAQUE ──
+async function rechercherPlaque() {
+  const plaque = document.getElementById('f-plaque').value.trim().replace(/[-\s]/g, '').toUpperCase();
+  const alertEl = document.getElementById('plaque-alert');
+  
+  if (plaque.length < 5) {
+    alertEl.innerHTML = '<div class="alert alert-error" style="padding:8px 12px;font-size:13px;">⚠️ Entrez une plaque valide (ex: AB123CD)</div>';
+    return;
+  }
+
+  alertEl.innerHTML = '<div style="font-size:13px;color:var(--texte-muted);">🔍 Recherche en cours...</div>';
+
+  try {
+    // Using api-vehicule.fr - free French plate API
+    const response = await fetch(`https://api-vehicule.fr/api/v1/immatriculation/${plaque}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    
+    if (!response.ok) throw new Error('Véhicule non trouvé');
+    
+    const data = await response.json();
+    
+    if (data && data.marque) {
+      // Pre-fill form fields
+      if (data.marque) {
+        document.getElementById('f-marque').value = data.marque;
+        const marqueSelect = document.getElementById('f-marque-select');
+        if (marqueSelect) {
+          const option = Array.from(marqueSelect.options).find(o => o.value.toLowerCase() === data.marque.toLowerCase());
+          if (option) marqueSelect.value = option.value;
+        }
+      }
+      if (data.modele) {
+        document.getElementById('f-modele').value = data.modele;
+      }
+      if (data.annee || data.date_mise_en_circulation) {
+        const annee = data.annee || new Date(data.date_mise_en_circulation).getFullYear();
+        document.getElementById('f-annee').value = annee;
+      }
+      if (data.carburant) {
+        const carburantMap = { 'ESSENCE': 'Essence', 'DIESEL': 'Diesel', 'ELECTRIQUE': 'Électrique', 'HYBRIDE': 'Hybride', 'GPL': 'GPL' };
+        const carburant = carburantMap[data.carburant.toUpperCase()] || data.carburant;
+        document.getElementById('f-carburant').value = carburant;
+      }
+      if (data.puissance_fiscale || data.puissance_din) {
+        document.getElementById('f-puissance').value = data.puissance_din || data.puissance_fiscale;
+      }
+      if (data.boite) {
+        const boiteMap = { 'MANUELLE': 'Manuelle', 'AUTOMATIQUE': 'Automatique' };
+        const boite = boiteMap[data.boite.toUpperCase()] || '';
+        if (boite) document.getElementById('f-boite').value = boite;
+      }
+      if (data.version || data.finition) {
+        document.getElementById('f-finition').value = data.version || data.finition;
+      }
+
+      alertEl.innerHTML = '<div class="alert alert-success" style="padding:8px 12px;font-size:13px;">✅ Informations pré-remplies ! Vérifiez et complétez si nécessaire.</div>';
+    } else {
+      throw new Error('Données insuffisantes');
+    }
+  } catch(e) {
+    // Fallback - API might not work, show message
+    alertEl.innerHTML = '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;">⚠️ Impossible de récupérer les informations automatiquement. Vous pouvez aussi consulter <a href="https://histovec.interieur.gouv.fr" target="_blank" style="color:#1246C8;font-weight:700;">Histovec</a> ou <a href="https://www.cartegrise.com/plaque-immatriculation" target="_blank" style="color:#1246C8;font-weight:700;">cartegrise.com</a> pour retrouver les infos de votre véhicule.</div>';
+  }
+}
 
 // ── MODIFIER - CHARGER MÉDIAS EXISTANTS ──
 async function chargerMediasModifier(id) {
