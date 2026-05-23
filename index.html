@@ -893,15 +893,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     <div class="form-group"><label>Type de véhicule *</label>
       <select id="f-type"><option value="">Sélectionner</option><option>Voiture</option><option>Moto</option><option>Utilitaire</option></select>
     </div>
-    <div class="form-group">
-      <label>Plaque d'immatriculation <span style="font-size:12px;color:var(--texte-light);font-weight:400;">(optionnel)</span></label>
-      <div style="display:flex;gap:10px;align-items:flex-start;">
-        <input type="text" id="f-plaque" placeholder="Ex : AB-123-CD" style="text-transform:uppercase;letter-spacing:2px;font-weight:700;" oninput="this.value=this.value.toUpperCase()">
-        <button type="button" class="btn btn-outline" onclick="rechercherPlaque()" style="white-space:nowrap;padding:11px 16px;">🔍 Pré-remplir</button>
-      </div>
-      <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">Votre plaque ne sera pas affichée publiquement. Elle sert uniquement à pré-remplir les informations du véhicule.</p>
-      <div id="plaque-alert" style="margin-top:8px;"></div>
-    </div>
+
     <div class="form-group">
       <label>Finition <span style="font-size:12px;color:var(--texte-light);font-weight:400;">(optionnel)</span></label>
       <input type="text" id="f-finition" placeholder="Ex : S Line, GTI, RS, Sport, Luxury, Business...">
@@ -1597,8 +1589,11 @@ async function voirDetail(id) {
     }
 
     const vendeurVerifie = data.email_verifie === true;
+    const estPro = data.type_vendeur === 'pro';
     const badgeVerifie = vendeurVerifie ? ' <span style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">✓ Profil vérifié</span>' : '';
-    document.getElementById('detail-vendeur').innerHTML = (data.prenom || 'Vendeur') + badgeVerifie + ' · ' + (data.localisation || '') + '<br><span style="color:var(--texte-light)">' + (data.email || '') + '</span>' + (data.telephone ? '<br>' + data.telephone : '');
+    const badgePro = estPro ? ' <span style="background:var(--bleu);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">🏢 Pro</span>' : '<span style="background:var(--fond);color:var(--texte-muted);border:1px solid var(--border);font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;">👤 Particulier</span>';
+    const nomVendeur = estPro ? (data.raison_sociale || data.prenom || 'Professionnel') : (data.prenom || 'Vendeur');
+    document.getElementById('detail-vendeur').innerHTML = nomVendeur + badgePro + badgeVerifie + ' · ' + (data.localisation || '') + '<br><span style="color:var(--texte-light)">' + (data.email || '') + '</span>' + (data.telephone ? '<br>' + data.telephone : '');
     // Load photos
     const { data: photoFiles } = await db.storage.from('photos').list(String(id));
     const mainImg = document.getElementById('detail-main-img');
@@ -2220,6 +2215,8 @@ async function publierAnnonce() {
       boite: boite || null,
       finition: finition || null,
       email_verifie: currentUser ? (currentUser.email_confirmed_at !== null) : false,
+      type_vendeur: currentUser ? (currentUser.user_metadata?.type_compte || 'particulier') : 'particulier',
+      raison_sociale: currentUser ? (currentUser.user_metadata?.raison_sociale || null) : null,
       options: optionsSelectionnees.length > 0 ? optionsSelectionnees.join('|') : null
     }]).select().single();
     if (error) throw error;
