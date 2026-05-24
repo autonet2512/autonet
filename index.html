@@ -716,7 +716,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     </div>
   </section>
 
-  <footer><div class="footer-inner"><div class="footer-logo">Auto<span>Net</span></div><span>© 2025 AutoNet — Tous droits réservés</span>
+  <footer><div class="footer-inner"><div class="footer-logo">Auto<span>Net</span></div><span>© 2025 AutoNet — Tous droits réservés · Armindo Lima</span>
       <a href="mailto:contact@autonet-auto.fr" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;">✉️ contact@autonet-auto.fr</a>
       <a onclick="showPage('legal')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">⚖️ Protection légale</a><span>🇫🇷 France · 🇬🇧 UK · 🇩🇪 DE · 🇪🇸 ES</span></div></footer>
 </div>
@@ -834,6 +834,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
             <div class="score-num">9.2</div>
             <div><div style="font-size:13px;font-weight:600;color:var(--texte);">Score de transparence</div><div style="font-size:12px;color:var(--texte-muted);margin-top:2px;">Dossier complet</div></div>
           </div>
+          <div id="detail-saves-count" style="text-align:center;font-size:13px;color:var(--texte-muted);margin-bottom:16px;"></div>
           <div class="sidebar-actions">
             <button class="btn btn-primary btn-lg" style="justify-content:center;" onclick="ouvrirModalMessage()">💬 Envoyer un message</button>
             <div id="btn-appel-wrapper"></div>
@@ -1223,7 +1224,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 
     <!-- Footer légal -->
     <div style="background:var(--fond);border:1px solid var(--border);border-radius:12px;padding:20px 24px;font-size:12px;color:var(--texte-muted);line-height:1.7;">
-      <strong>AutoNet — autonet-auto.fr</strong><br>
+      <strong>AutoNet — autonet-auto.fr</strong> · © 2025 Armindo Lima — Tous droits réservés<br>
       Contact : <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);">contact@autonet-auto.fr</a><br>
       Ce document est généré automatiquement par AutoNet et constitue une preuve horodatée de la déclaration du vendeur au moment de la mise en vente.<br>
       Article 1641 Code Civil : garantie des vices cachés · Article 1645 Code Civil : vendeur de mauvaise foi<br>
@@ -1375,7 +1376,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 // ══════════════════════════════════════════════════
 // ⚠️ REMPLACEZ CES DEUX LIGNES AVEC VOS CLÉS SUPABASE
 const SUPABASE_URL = 'https://fifwkvhcvnuawbllbdvm.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
+const SUPABASE_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpZndrdmhjdm51YXdibGxiZHZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3OTgxOTMsImV4cCI6MjA5MzM3NDE5M30.idLJSdKRTwtZlMdjH1_qU0GlAupaROrAdbizvF-YMgE';
 // ══════════════════════════════════════════════════
 
 const { createClient } = supabase;
@@ -1393,7 +1394,11 @@ function showPage(page) {
   if (page === 'accueil') chargerAccueilListings();
   if (page === 'annonces') chargerAnnonces();
   if (page === 'dashboard') chargerDashboard();
-  if (page === 'deposer') { setTimeout(initOptions, 100); setTimeout(initFormMarques, 100); }
+  if (page === 'deposer') { 
+    setTimeout(initOptions, 100); 
+    setTimeout(initFormMarques, 100); 
+    setTimeout(préremplirInfosVendeur, 150);
+  }
   if (page === 'accueil') setTimeout(initSearchMarques, 100);
 }
 
@@ -1430,7 +1435,10 @@ function renderCard(a) {
           <div class="listing-price">${Number(a.prix || 0).toLocaleString('fr-FR')} € <span>net vendeur</span></div>
           <div style="display:flex;align-items:center;gap:8px;">
             <div class="listing-loc">📍 ${a.localisation || ''}</div>
-            <button onclick="event.stopPropagation();toggleSauvegarde(${a.id},this)" class="btn-save" data-id="${a.id}" style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;" title="Sauvegarder">🤍</button>
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span id="save-count-${a.id}" style="font-size:12px;color:var(--texte-light);"></span>
+              <button onclick="event.stopPropagation();toggleSauvegarde(${a.id},this)" class="btn-save" data-id="${a.id}" style="background:none;border:none;cursor:pointer;font-size:20px;padding:2px;" title="Sauvegarder">🤍</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1453,6 +1461,7 @@ async function chargerAccueilListings() {
     setTimeout(() => chargerBadgesEntretien(data, 'page-accueil'), 200);
     setTimeout(() => chargerBadgesCT(data, 'page-accueil'), 300);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
+    setTimeout(() => chargerCompteursSauvegardes(data, 'page-accueil'), 400);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement. Vérifiez vos clés Supabase.</p></div>`;
   }
@@ -1523,6 +1532,7 @@ async function chargerAnnonces(params = {}) {
     setTimeout(() => chargerBadgesEntretien(data, 'page-annonces'), 200);
     setTimeout(() => chargerBadgesCT(data, 'page-annonces'), 300);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
+    setTimeout(() => chargerCompteursSauvegardes(data, 'page-annonces'), 400);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement.</p></div>`;
   }
@@ -1573,6 +1583,11 @@ async function voirDetail(id) {
     document.getElementById('detail-prix').textContent = Number(data.prix || 0).toLocaleString('fr-FR') + ' €';
     document.getElementById('detail-description').textContent = data.description || '';
     chargerDefauts(id);
+    // Load saves count
+    db.from('sauvegardes').select('id', { count: 'exact', head: true }).eq('annonce_id', id).then(({ count }) => {
+      const el = document.getElementById('detail-saves-count');
+      if (el && count > 0) el.innerHTML = '❤️ ' + count + ' personne' + (count > 1 ? 's ont' : ' a') + ' sauvegardé cette annonce';
+    });
     chargerCSA(id);
     chargerEntretien(id);
     chargerCT(id);
@@ -2830,6 +2845,33 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
 
+// ── PRÉ-REMPLISSAGE INFOS VENDEUR ──
+function préremplirInfosVendeur() {
+  if (!currentUser) return;
+  const meta = currentUser.user_metadata || {};
+  const estPro = meta.type_compte === 'pro';
+
+  // Prénom
+  const prenomEl = document.getElementById('f-prenom');
+  if (prenomEl && !prenomEl.value) prenomEl.value = meta.prenom || '';
+
+  // Email
+  const emailEl = document.getElementById('f-email');
+  if (emailEl && !emailEl.value) emailEl.value = currentUser.email || '';
+
+  // Si pro — afficher raison sociale au lieu du prénom
+  if (estPro) {
+    const prenomLabel = prenomEl ? prenomEl.previousElementSibling : null;
+    if (prenomLabel) prenomLabel.textContent = 'Raison sociale *';
+    if (prenomEl && !prenomEl.value) prenomEl.value = meta.raison_sociale || meta.prenom || '';
+    prenomEl.placeholder = 'Ex : Garage Dupont SARL';
+
+    // Téléphone pro
+    const telEl = document.getElementById('f-tel');
+    if (telEl && !telEl.value) telEl.value = meta.tel_pro || '';
+  }
+}
+
 // ── RECHERCHE PAR PLAQUE ──
 async function rechercherPlaque() {
   const plaque = document.getElementById('f-plaque').value.trim().replace(/[-\s]/g, '').toUpperCase();
@@ -3246,6 +3288,23 @@ async function imprimerAnnonce(id) {
 
   } catch(e) {
     console.error('Print error:', e);
+  }
+}
+
+// ── COMPTEUR SAUVEGARDES ──
+async function chargerCompteursSauvegardes(annonces, containerId) {
+  const scope = containerId ? document.getElementById(containerId) : document;
+  if (!scope) return;
+  for (const a of annonces) {
+    try {
+      const { count } = await db.from('sauvegardes')
+        .select('id', { count: 'exact', head: true })
+        .eq('annonce_id', a.id);
+      const el = scope.querySelector(`#save-count-${a.id}`);
+      if (el && count > 0) {
+        el.textContent = count + ' ❤️';
+      }
+    } catch(e) {}
   }
 }
 
