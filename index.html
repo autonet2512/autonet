@@ -399,6 +399,53 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
   font-size: 12px; font-weight: 600; color: var(--bleu);
 }
 
+/* ── NOTATION ── */
+.stars-display { display:flex; gap:4px; }
+.star { font-size:20px; cursor:pointer; transition:transform 0.1s; color:#d1d5db; }
+.star.active { color:#f59e0b; }
+.star:hover { transform:scale(1.2); }
+.rating-card {
+  background:var(--fond);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  padding:16px 18px;
+  margin-bottom:10px;
+}
+.rating-stars { display:flex; gap:3px; margin-bottom:6px; }
+.rating-star { color:#f59e0b; font-size:14px; }
+.rating-comment { font-size:13px; color:var(--texte-muted); line-height:1.5; }
+.rating-meta { font-size:11px; color:var(--texte-light); margin-top:6px; }
+.rating-avg { display:flex; align-items:center; gap:10px; }
+.rating-avg-num { font-family:'Bricolage Grotesque',sans-serif; font-size:36px; font-weight:800; color:#f59e0b; }
+.rating-avg-stars { display:flex; gap:3px; }
+
+/* ── PAGINATION ── */
+.pagination {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  padding:32px 0;
+  flex-wrap:wrap;
+}
+.page-btn {
+  width:36px; height:36px;
+  border-radius:8px;
+  border:1.5px solid var(--border);
+  background:var(--blanc);
+  color:var(--texte);
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.page-btn:hover { border-color:var(--bleu); color:var(--bleu); }
+.page-btn.active { background:var(--bleu); color:#fff; border-color:var(--bleu); }
+.page-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
 /* ── IMPRESSION ── */
 @media print {
   nav, .hero, .search-wrap, .avantages-section, footer,
@@ -743,6 +790,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     <div class="listings-grid" id="annonces-listings">
       <div class="loader"><div class="spinner"></div></div>
     </div>
+    <div id="annonces-pagination" class="pagination"></div>
   </section>
 </div>
 
@@ -765,6 +813,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           <div class="annonce-tab" onclick="switchAnnoncTab(this,'entretien')">🔧 Entretien</div>
           <div class="annonce-tab" onclick="switchAnnoncTab(this,'ct')">✅ Contrôle technique</div>
           <div class="annonce-tab" onclick="switchAnnoncTab(this,'csa')">📄 CSA</div>
+          <div class="annonce-tab" onclick="switchAnnoncTab(this,'avis')">⭐ Avis</div>
         </div>
 
         <!-- FICHE -->
@@ -802,6 +851,32 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
               <h3>Aucun entretien renseigné</h3>
               <p>Le vendeur n'a pas encore ajouté l'historique d'entretien.</p>
             </div>
+          </div>
+        </div>
+
+        <!-- AVIS -->
+        <div class="annonce-tab-content" id="atab-avis">
+          <div id="detail-avis-content">
+            <div class="loader"><div class="spinner"></div></div>
+          </div>
+          <div id="detail-avis-form" style="display:none;margin-top:24px;background:var(--fond);border:1.5px solid var(--border);border-radius:12px;padding:20px;">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;">✍️ Laisser un avis</div>
+            <div id="avis-alert"></div>
+            <div style="margin-bottom:14px;">
+              <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Votre note *</label>
+              <div class="stars-display" id="stars-input">
+                <span class="star" data-val="1" onclick="setRating(1)">★</span>
+                <span class="star" data-val="2" onclick="setRating(2)">★</span>
+                <span class="star" data-val="3" onclick="setRating(3)">★</span>
+                <span class="star" data-val="4" onclick="setRating(4)">★</span>
+                <span class="star" data-val="5" onclick="setRating(5)">★</span>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:14px;">
+              <label style="font-size:13px;font-weight:600;">Commentaire (optionnel)</label>
+              <textarea id="avis-comment" placeholder="Décrivez votre expérience avec ce vendeur..." style="background:var(--blanc);border:1.5px solid var(--border);padding:11px 14px;border-radius:9px;font-size:14px;width:100%;outline:none;resize:none;height:80px;margin-top:6px;font-family:'Instrument Sans',sans-serif;"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="soumettreAvis()">Publier mon avis</button>
           </div>
         </div>
 
@@ -849,6 +924,11 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
             <button class="btn btn-primary btn-lg" style="justify-content:center;" onclick="ouvrirModalMessage()">💬 Envoyer un message</button>
             <div id="btn-appel-wrapper"></div>
             <button class="btn btn-outline btn-lg" style="justify-content:center;" id="btn-save-detail" onclick="toggleSauvegardeDetail()">🤍 Sauvegarder</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">
+            <button class="btn btn-outline" style="justify-content:center;padding:9px 8px;font-size:13px;" onclick="partagerWhatsApp()">💬 WhatsApp</button>
+            <button class="btn btn-outline" style="justify-content:center;padding:9px 8px;font-size:13px;" onclick="partagerFacebook()">📘 Facebook</button>
+            <button class="btn btn-outline" style="justify-content:center;padding:9px 8px;font-size:13px;" onclick="copierLien()">🔗 Lien</button>
           </div>
         </div>
         <div class="sidebar-card" style="font-size:13px;color:var(--texte-muted);line-height:1.7;">
@@ -2142,11 +2222,20 @@ async function chargerPhotosCards(annonces, containerId) {
 }
 
 // ── CHARGER TOUTES LES ANNONCES ──
-async function chargerAnnonces(params = {}) {
+const ANNONCES_PAR_PAGE = 12;
+let currentPageAnnonces = 1;
+let totalAnnonces = 0;
+let lastSearchParams = {};
+
+async function chargerAnnonces(params = {}, page = 1) {
+  lastSearchParams = params;
+  currentPageAnnonces = page;
   const container = document.getElementById('annonces-listings');
   container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   try {
-    let query = db.from('annonces').select('*').in('statut', ['active', null]).order('created_at', { ascending: false });
+    const from = (page - 1) * ANNONCES_PAR_PAGE;
+    const to = from + ANNONCES_PAR_PAGE - 1;
+    let query = db.from('annonces').select('*', { count: 'exact' }).in('statut', ['active', null]).order('created_at', { ascending: false }).range(from, to);
     if (params.marque) query = query.ilike('marque', `%${params.marque}%`);
     if (params.modele) query = query.ilike('modele', `%${params.modele}%`);
     if (params.budget) query = query.lte('prix', parseInt(params.budget));
@@ -2160,7 +2249,8 @@ async function chargerAnnonces(params = {}) {
     if (params.chMin) query = query.gte('puissance', parseInt(params.chMin));
     if (params.chMax) query = query.lte('puissance', parseInt(params.chMax));
     if (params.finition) query = query.ilike('finition', `%${params.finition}%`);
-    const { data, error } = await query;
+    const { data, error, count } = await query;
+    totalAnnonces = count || 0;
     if (error) throw error;
     if (!data || data.length === 0) {
       container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔍</div><h3>Aucune annonce trouvée</h3><p>Essayez avec d'autres critères.</p></div>`;
@@ -2173,6 +2263,8 @@ async function chargerAnnonces(params = {}) {
     setTimeout(() => chargerBadgesCT(data, 'page-annonces'), 300);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
     setTimeout(() => chargerCompteursSauvegardes(data, 'page-annonces'), 400);
+    // Render pagination
+    renderPagination(totalAnnonces, currentPageAnnonces);
   } catch(e) {
     container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><p>Erreur de chargement.</p></div>`;
   }
@@ -2231,6 +2323,7 @@ async function voirDetail(id) {
     chargerCSA(id);
     chargerEntretien(id);
     chargerCT(id);
+    chargerAvis(id);
     // Set phone button
     const appelWrapper = document.getElementById('btn-appel-wrapper');
     if (appelWrapper) {
@@ -3484,6 +3577,135 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') lightboxNav(-1);
   if (e.key === 'Escape') fermerLightbox({target: document.getElementById('lightbox')});
 });
+
+// ── PAGINATION ──
+function renderPagination(total, currentPage) {
+  const container = document.getElementById('annonces-pagination');
+  if (!container) return;
+  const totalPages = Math.ceil(total / ANNONCES_PAR_PAGE);
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+  let html = '';
+  // Prev button
+  html += '<button class="page-btn" onclick="chargerAnnonces(lastSearchParams,' + (currentPage-1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>‹</button>';
+  
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+      html += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="chargerAnnonces(lastSearchParams,' + i + ')">' + i + '</button>';
+    } else if (i === currentPage - 3 || i === currentPage + 3) {
+      html += '<span style="color:var(--texte-light);padding:0 4px;">...</span>';
+    }
+  }
+  
+  // Next button
+  html += '<button class="page-btn" onclick="chargerAnnonces(lastSearchParams,' + (currentPage+1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>›</button>';
+  
+  container.innerHTML = html;
+  // Scroll to top of listings
+  document.getElementById('page-annonces').scrollTo(0, 0);
+}
+
+// ── PARTAGE ──
+function partagerWhatsApp() {
+  if (!currentAnnonce) return;
+  const titre = (currentAnnonce.marque || '') + ' ' + (currentAnnonce.modele || '') + ' - ' + Number(currentAnnonce.prix || 0).toLocaleString('fr-FR') + '€';
+  const url = 'https://autonet-auto.fr';
+  window.open('https://wa.me/?text=' + encodeURIComponent(titre + ' sur AutoNet : ' + url), '_blank');
+}
+
+function partagerFacebook() {
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent('https://autonet-auto.fr'), '_blank');
+}
+
+function copierLien() {
+  navigator.clipboard.writeText('https://autonet-auto.fr').then(() => {
+    alert('Lien copié !');
+  }).catch(() => {
+    prompt('Copiez ce lien :', 'https://autonet-auto.fr');
+  });
+}
+
+// ── NOTATION ──
+let currentRating = 0;
+
+function setRating(val) {
+  currentRating = val;
+  document.querySelectorAll('#stars-input .star').forEach((s, i) => {
+    s.classList.toggle('active', i < val);
+  });
+}
+
+async function chargerAvis(annonceId) {
+  const container = document.getElementById('detail-avis-content');
+  const form = document.getElementById('detail-avis-form');
+  if (!container) return;
+
+  try {
+    const { data, error } = await db.from('avis')
+      .select('*')
+      .eq('annonce_id', annonceId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div class="empty-state" style="padding:40px;"><div class="empty-icon">⭐</div><h3>Aucun avis</h3><p>Soyez le premier à laisser un avis sur ce vendeur.</p></div>';
+    } else {
+      const avg = data.reduce((s, a) => s + a.note, 0) / data.length;
+      const stars = '★'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg));
+      container.innerHTML = '<div class="rating-avg" style="margin-bottom:20px;padding:16px;background:var(--fond);border-radius:12px;">' +
+        '<div class="rating-avg-num">' + avg.toFixed(1) + '</div>' +
+        '<div><div class="rating-avg-stars" style="font-size:20px;color:#f59e0b;">' + stars + '</div>' +
+        '<div style="font-size:13px;color:var(--texte-muted);margin-top:4px;">' + data.length + ' avis</div></div></div>' +
+        data.map(a => '<div class="rating-card">' +
+          '<div class="rating-stars">' + '★'.repeat(a.note) + '<span style="color:#d1d5db;">' + '★'.repeat(5 - a.note) + '</span></div>' +
+          (a.commentaire ? '<div class="rating-comment">' + a.commentaire + '</div>' : '') +
+          '<div class="rating-meta">' + (a.acheteur_prenom || 'Acheteur') + ' · ' + new Date(a.created_at).toLocaleDateString('fr-FR') + '</div>' +
+          '</div>'
+        ).join('');
+    }
+
+    // Show form if logged in and not vendor
+    if (currentUser && form) {
+      form.style.display = 'block';
+    }
+  } catch(e) {
+    container.innerHTML = '<p style="color:var(--texte-muted);font-size:14px;">Impossible de charger les avis.</p>';
+  }
+}
+
+async function soumettreAvis() {
+  if (!currentUser) { showPage('connexion'); return; }
+  if (!currentAnnonce) return;
+  const alertEl = document.getElementById('avis-alert');
+  
+  if (!currentRating) {
+    alertEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:12px;">⚠️ Veuillez sélectionner une note.</div>';
+    return;
+  }
+
+  const commentaire = document.getElementById('avis-comment').value.trim();
+
+  try {
+    const { error } = await db.from('avis').insert([{
+      annonce_id: currentAnnonce.id,
+      vendeur_email: currentAnnonce.email,
+      acheteur_prenom: currentUser.user_metadata?.prenom || 'Acheteur',
+      acheteur_email: currentUser.email,
+      note: currentRating,
+      commentaire: commentaire || null
+    }]);
+    if (error) throw error;
+    alertEl.innerHTML = '<div class="alert alert-success" style="margin-bottom:12px;">✅ Avis publié !</div>';
+    document.getElementById('avis-comment').value = '';
+    currentRating = 0;
+    setRating(0);
+    setTimeout(() => chargerAvis(currentAnnonce.id), 500);
+  } catch(e) {
+    alertEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:12px;">❌ ' + e.message + '</div>';
+  }
+}
 
 // ── PRÉ-REMPLISSAGE INFOS VENDEUR ──
 function préremplirInfosVendeur() {
