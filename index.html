@@ -2407,7 +2407,7 @@ async function chargerAccueilListings() {
   const container = document.getElementById('accueil-listings');
   container.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
   try {
-    const { data, error } = await db.from('annonces').select('*').in('statut', ['active', null]).order('created_at', { ascending: false }).limit(6);
+    const { data, error } = await db.from('annonces').select('*').or('statut.eq.active,statut.is.null').order('created_at', { ascending: false }).limit(6);
     if (error) throw error;
     if (!data || data.length === 0) {
       container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🚗</div><h3>Aucune annonce pour l'instant</h3><p>Soyez le premier à publier !</p></div>`;
@@ -2490,7 +2490,7 @@ async function chargerAnnonces(params = {}, page = 1) {
   try {
     const from = (page - 1) * ANNONCES_PAR_PAGE;
     const to = from + ANNONCES_PAR_PAGE - 1;
-    let query = db.from('annonces').select('*', { count: 'exact' }).in('statut', ['active', null]).order('created_at', { ascending: false }).range(from, to);
+    let query = db.from('annonces').select('*', { count: 'exact' }).or('statut.eq.active,statut.is.null').order('created_at', { ascending: false }).range(from, to);
     if (params.marque) query = query.ilike('marque', `%${params.marque}%`);
     if (params.modele) query = query.ilike('modele', `%${params.modele}%`);
     if (params.budget) query = query.lte('prix', parseInt(params.budget));
@@ -3905,7 +3905,7 @@ async function voirProfilVendeur(email) {
     const { data: annonces, error } = await db.from('annonces')
       .select('*')
       .eq('email', email)
-      .in('statut', ['active', null])
+      .or('statut.eq.active,statut.is.null')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
