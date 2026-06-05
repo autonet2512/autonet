@@ -814,9 +814,6 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         <button class="btn btn-primary btn-lg" onclick="rechercherAnnonces()" style="white-space:nowrap;">🔍 Rechercher</button>
         <button onclick="reinitialiserRecherche()" class="btn btn-outline" style="font-size:13px;padding:11px 20px;">✕ Réinitialiser</button>
       </div>
-      <div style="margin-top:12px;">
-        <button onclick="reinitialiserRecherche()" class="btn btn-outline" style="font-size:13px;padding:7px 16px;">✕ Réinitialiser</button>
-      </div>
     </div>
   </div>
 
@@ -847,18 +844,14 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     </div>
   </section>
 
-  <footer><div class="footer-inner"><div class="footer-logo">Auto<span>Net</span></div><span>© 2025 AutoNet — Tous droits réservés · Armindo Lima</span>
+  <footer><div class="footer-inner"><div class="footer-logo">Auto<span>Net</span></div>
+      <span>© 2025 AutoNet — Tous droits réservés · Armindo Lima</span>
       <a href="mailto:contact@autonet-auto.fr" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;">✉️ contact@autonet-auto.fr</a>
       <a onclick="showPage('legal')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">⚖️ Protection légale</a>
       <a onclick="showPage('cgu')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">CGU</a>
       <a onclick="showPage('mentions')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">Mentions légales</a>
       <a onclick="showPage('confidentialite')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">Confidentialité</a>
-      <a onclick="showPage('cgu')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">📋 CGU</a>
-      <a onclick="showPage('confidentialite')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">🔒 Confidentialité</a>
-      <a onclick="showPage('mentions')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">📄 Mentions légales</a>
-      <a onclick="showPage('cgu')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">📋 CGU</a>
-      <a onclick="showPage('confidentialite')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">🔒 Confidentialité</a>
-      <a onclick="showPage('mentions')" style="color:rgba(255,255,255,0.5);font-size:13px;text-decoration:none;cursor:pointer;">📄 Mentions légales</a><span>🇫🇷 France · 🇬🇧 UK · 🇩🇪 DE · 🇪🇸 ES</span></div></footer>
+    </div></footer>
 </div>
 
 <!-- ══════════════════════════════════════════════ -->
@@ -1470,197 +1463,12 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 <!-- ══════════════════════════════════════════════ -->
 <!-- PAGE CGU -->
 <!-- ══════════════════════════════════════════════ -->
-<div id="page-cgu" class="page">
-  <section style="padding:60px 40px;max-width:860px;margin:0 auto;">
-    <div class="section-eyebrow">Documents légaux</div>
-    <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-2px;margin-bottom:8px;">Conditions Générales d'Utilisation</h1>
-    <p style="color:var(--texte-muted);margin-bottom:40px;">Dernière mise à jour : janvier 2025</p>
-
-    <div style="display:flex;flex-direction:column;gap:28px;">
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">1. Présentation du service</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">AutoNet (autonet-auto.fr) est une plateforme de petites annonces automobiles entre particuliers et professionnels, éditée par Armindo Lima. AutoNet permet aux vendeurs de publier des annonces détaillées de véhicules et aux acheteurs de consulter ces annonces et de contacter les vendeurs.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">2. Accès au service</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">L'accès à AutoNet est gratuit pour les particuliers. La création d'un compte est nécessaire pour publier une annonce. L'utilisateur s'engage à fournir des informations exactes lors de son inscription et à maintenir à jour ses informations personnelles.<br><br>AutoNet se réserve le droit de suspendre ou supprimer tout compte en cas de non-respect des présentes CGU.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">3. Règles de publication</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">En publiant une annonce sur AutoNet, l'utilisateur s'engage à :</p>
-        <ul style="font-size:14px;color:var(--texte-muted);line-height:1.8;margin-top:10px;padding-left:20px;">
-          <li>Être propriétaire du véhicule mis en vente ou mandaté par le propriétaire</li>
-          <li>Fournir des informations exactes et complètes sur le véhicule</li>
-          <li>Déclarer tous les défauts connus du véhicule (conformément à l'article 1641 du Code Civil)</li>
-          <li>Ne pas publier d'annonces frauduleuses ou trompeuses</li>
-          <li>Ne pas publier de photos contenant des informations personnelles visibles (plaques non floutées, documents)</li>
-          <li>Respecter la législation française en vigueur</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">4. Archivage des annonces</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">Conformément à l'article 1641 du Code Civil relatif aux vices cachés, AutoNet archive les annonces marquées comme vendues pendant une durée de <strong style="color:var(--texte);">24 mois</strong> à compter de la date de vente déclarée. Ces annonces archivées constituent une preuve horodatée de la déclaration du vendeur et peuvent être utilisées en cas de litige.<br><br>Une fois marquée comme vendue, une annonce ne peut plus être modifiée ni supprimée par le vendeur. Cette disposition vise à protéger aussi bien le vendeur que l'acheteur.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">5. Responsabilité</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">AutoNet est une plateforme d'intermédiation. AutoNet ne participe pas aux transactions entre vendeurs et acheteurs et ne saurait être tenu responsable des informations publiées par les utilisateurs, des transactions effectuées hors de la plateforme, des litiges entre vendeurs et acheteurs, ou de l'état réel des véhicules mis en vente.<br><br>Chaque vendeur est seul responsable des informations publiées dans son annonce et des obligations légales qui en découlent.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">6. Propriété intellectuelle</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">L'ensemble du contenu du site AutoNet (design, code, textes, logos) est protégé par le droit d'auteur et appartient à Armindo Lima. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.<br><br>Les photos publiées par les utilisateurs restent leur propriété. En les publiant sur AutoNet, ils accordent à AutoNet une licence d'utilisation non exclusive pour l'affichage sur la plateforme.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">7. Modification des CGU</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">AutoNet se réserve le droit de modifier les présentes CGU à tout moment. Les utilisateurs seront informés par email de toute modification substantielle. L'utilisation continue du service après notification vaut acceptation des nouvelles CGU.</p>
-      </div>
-
-      <div style="background:var(--fond);border:1.5px solid var(--border);border-radius:12px;padding:20px;font-size:12px;color:var(--texte-muted);">
-        Pour toute question : <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);">contact@autonet-auto.fr</a>
-      </div>
-    </div>
-  </section>
-</div>
-
 <!-- ══════════════════════════════════════════════ -->
 <!-- PAGE CONFIDENTIALITÉ -->
 <!-- ══════════════════════════════════════════════ -->
-<div id="page-confidentialite" class="page">
-  <section style="padding:60px 40px;max-width:860px;margin:0 auto;">
-    <div class="section-eyebrow">Documents légaux</div>
-    <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-2px;margin-bottom:8px;">Politique de Confidentialité</h1>
-    <p style="color:var(--texte-muted);margin-bottom:40px;">Dernière mise à jour : janvier 2025 — Conformément au RGPD</p>
-
-    <div style="display:flex;flex-direction:column;gap:28px;">
-
-      <div style="background:var(--bleu);border-radius:12px;padding:24px;color:#fff;font-size:14px;line-height:1.7;">
-        🔒 AutoNet s'engage à protéger vos données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés.
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">1. Responsable du traitement</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;"><strong style="color:var(--texte);">Armindo Lima</strong><br>Email : contact@autonet-auto.fr<br>Site : autonet-auto.fr</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">2. Données collectées</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">AutoNet collecte les données suivantes :</p>
-        <ul style="font-size:14px;color:var(--texte-muted);line-height:1.8;margin-top:10px;padding-left:20px;">
-          <li><strong style="color:var(--texte);">Données d'inscription :</strong> prénom, adresse email, mot de passe (chiffré)</li>
-          <li><strong style="color:var(--texte);">Données professionnelles (comptes Pro) :</strong> raison sociale, numéro SIRET, adresse, téléphone</li>
-          <li><strong style="color:var(--texte);">Données d'annonce :</strong> informations sur le véhicule, photos, localisation, prix</li>
-          <li><strong style="color:var(--texte);">Données de messagerie :</strong> messages échangés entre utilisateurs</li>
-          <li><strong style="color:var(--texte);">Données de navigation :</strong> adresse IP, navigateur (via Supabase)</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">3. Finalités du traitement</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">Vos données sont utilisées pour :</p>
-        <ul style="font-size:14px;color:var(--texte-muted);line-height:1.8;margin-top:10px;padding-left:20px;">
-          <li>Créer et gérer votre compte utilisateur</li>
-          <li>Publier et afficher vos annonces</li>
-          <li>Permettre la messagerie entre utilisateurs</li>
-          <li>Envoyer des notifications par email</li>
-          <li>Archiver les annonces vendues (obligation légale — vices cachés)</li>
-          <li>Améliorer le service</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">4. Conservation des données</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">
-          • <strong style="color:var(--texte);">Compte utilisateur :</strong> conservé tant que le compte est actif<br>
-          • <strong style="color:var(--texte);">Annonces actives :</strong> conservées tant que l'annonce est publiée<br>
-          • <strong style="color:var(--texte);">Annonces vendues :</strong> archivées 24 mois (obligation légale)<br>
-          • <strong style="color:var(--texte);">Annonces supprimées :</strong> supprimées définitivement après 15 jours<br>
-          • <strong style="color:var(--texte);">Messages :</strong> conservés jusqu'à suppression par l'utilisateur
-        </p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">5. Vos droits (RGPD)</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">Conformément au RGPD, vous disposez des droits suivants :</p>
-        <ul style="font-size:14px;color:var(--texte-muted);line-height:1.8;margin-top:10px;padding-left:20px;">
-          <li><strong style="color:var(--texte);">Droit d'accès :</strong> obtenir une copie de vos données</li>
-          <li><strong style="color:var(--texte);">Droit de rectification :</strong> corriger vos données inexactes</li>
-          <li><strong style="color:var(--texte);">Droit à l'effacement :</strong> supprimer votre compte et vos données (sauf obligations légales)</li>
-          <li><strong style="color:var(--texte);">Droit à la portabilité :</strong> recevoir vos données dans un format lisible</li>
-          <li><strong style="color:var(--texte);">Droit d'opposition :</strong> vous opposer à certains traitements</li>
-        </ul>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;margin-top:12px;">Pour exercer ces droits : <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);font-weight:600;">contact@autonet-auto.fr</a></p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:12px;">6. Hébergement et sous-traitants</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">
-          • <strong style="color:var(--texte);">Hébergement :</strong> GitHub Pages (Microsoft) — États-Unis<br>
-          • <strong style="color:var(--texte);">Base de données :</strong> Supabase — Union Européenne<br>
-          • <strong style="color:var(--texte);">Emails transactionnels :</strong> Zoho Mail — Union Européenne<br>
-          • <strong style="color:var(--texte);">Notifications messages :</strong> EmailJS — États-Unis
-        </p>
-      </div>
-
-    </div>
-  </section>
-</div>
-
 <!-- ══════════════════════════════════════════════ -->
 <!-- PAGE MENTIONS LÉGALES -->
 <!-- ══════════════════════════════════════════════ -->
-<div id="page-mentions" class="page">
-  <section style="padding:60px 40px;max-width:860px;margin:0 auto;">
-    <div class="section-eyebrow">Documents légaux</div>
-    <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-2px;margin-bottom:40px;">Mentions Légales</h1>
-
-    <div style="display:flex;flex-direction:column;gap:24px;">
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px;">Éditeur du site</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:2;">
-          <strong style="color:var(--texte);">Nom :</strong> Armindo Lima<br>
-          <strong style="color:var(--texte);">Site web :</strong> autonet-auto.fr<br>
-          <strong style="color:var(--texte);">Email :</strong> <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);">contact@autonet-auto.fr</a><br>
-          <strong style="color:var(--texte);">Statut :</strong> Particulier — auto-entrepreneur (en cours de création)
-        </p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px;">Hébergement</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:2;">
-          <strong style="color:var(--texte);">Hébergeur :</strong> GitHub Pages<br>
-          <strong style="color:var(--texte);">Société :</strong> GitHub Inc. (Microsoft)<br>
-          <strong style="color:var(--texte);">Adresse :</strong> 88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis<br>
-          <strong style="color:var(--texte);">Site :</strong> github.com
-        </p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px;">Propriété intellectuelle</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">L'ensemble du contenu de ce site (design, code source, textes, logo AutoNet) est protégé par le droit d'auteur. © 2025 Armindo Lima — Tous droits réservés.<br><br>Toute reproduction, même partielle, du contenu de ce site est interdite sans autorisation écrite préalable de l'éditeur.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px;">Droit applicable</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">Le présent site est soumis au droit français. En cas de litige, les tribunaux français seront seuls compétents.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;margin-bottom:16px;">Contact</h2>
-        <p style="font-size:14px;color:var(--texte-muted);line-height:1.8;">Pour toute question relative au site ou à vos données personnelles :<br>
-        <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);font-weight:600;">contact@autonet-auto.fr</a></p>
-      </div>
-
-    </div>
-  </section>
-</div>
-
 <!-- ══════════════════════════════════════════════ -->
 <!-- PAGE PROFIL VENDEUR -->
 <!-- ══════════════════════════════════════════════ -->
@@ -1706,231 +1514,12 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 <!-- ══════════════════════════════════════════════ -->
 <!-- PAGE CGU -->
 <!-- ══════════════════════════════════════════════ -->
-<div id="page-cgu" class="page">
-  <section style="padding:60px 40px;max-width:860px;margin:0 auto;">
-    <div style="margin-bottom:40px;">
-      <div class="section-eyebrow">Juridique</div>
-      <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-1.5px;margin-bottom:8px;">Conditions Générales d'Utilisation</h1>
-      <p style="color:var(--texte-muted);font-size:14px;">Dernière mise à jour : juin 2025</p>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:28px;font-size:15px;line-height:1.8;color:var(--texte);">
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 1 — Présentation</h2>
-        <p>AutoNet (autonet-auto.fr) est une plateforme de petites annonces automobiles en ligne permettant à des particuliers et professionnels de publier et consulter des annonces de vente de véhicules d'occasion. AutoNet est édité par Armindo Lima, domicilié en France. Contact : contact@autonet-auto.fr</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 2 — Acceptation des CGU</h2>
-        <p>L'utilisation de la plateforme AutoNet implique l'acceptation pleine et entière des présentes CGU. Toute personne qui accède au site et utilise ses services déclare avoir pris connaissance des présentes conditions et les accepter sans réserve.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 3 — Services proposés</h2>
-        <p>AutoNet propose les services suivants :</p>
-        <ul style="margin:12px 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li>Publication d'annonces de vente de véhicules (voitures, motos, utilitaires)</li>
-          <li>Consultation et recherche d'annonces</li>
-          <li>Messagerie interne entre acheteurs et vendeurs</li>
-          <li>Archivage sécurisé des annonces vendues pendant 24 mois</li>
-          <li>Création de compte particulier ou professionnel</li>
-        </ul>
-        <p style="margin-top:12px;">L'accès aux services de base est gratuit. AutoNet se réserve le droit de proposer des services payants premium à l'avenir.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 4 — Obligations des utilisateurs</h2>
-        <p>En utilisant AutoNet, l'utilisateur s'engage à :</p>
-        <ul style="margin:12px 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li>Fournir des informations exactes, complètes et à jour</li>
-          <li>Ne publier que des annonces de véhicules lui appartenant légalement</li>
-          <li>Ne pas publier de contenu illicite, trompeur ou frauduleux</li>
-          <li>Respecter la vie privée des autres utilisateurs</li>
-          <li>Ne pas utiliser le service à des fins commerciales non déclarées</li>
-          <li>Signaler toute anomalie ou utilisation abusive à contact@autonet-auto.fr</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 5 — Archivage des annonces et protection légale</h2>
-        <p>Conformément à l'<strong>article 1641 du Code Civil</strong> relatif à la garantie des vices cachés, AutoNet archive automatiquement toute annonce marquée comme "vendue" pendant une durée de <strong>24 mois</strong> à compter de la date de vente déclarée.</p>
-        <p style="margin-top:12px;">Cette annonce archivée :</p>
-        <ul style="margin:12px 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li>Ne peut être modifiée ni supprimée par le vendeur</li>
-          <li>Constitue une preuve horodatée de la déclaration du vendeur</li>
-          <li>Peut être imprimée par le vendeur comme preuve de bonne foi</li>
-          <li>Est accessible uniquement au vendeur concerné</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 6 — Responsabilité</h2>
-        <p>AutoNet est une plateforme d'intermédiation. AutoNet ne peut être tenu responsable :</p>
-        <ul style="margin:12px 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li>De l'exactitude des informations publiées par les utilisateurs</li>
-          <li>Des transactions réalisées entre acheteurs et vendeurs</li>
-          <li>Des litiges survenant après la vente d'un véhicule</li>
-          <li>Des interruptions de service pour maintenance ou cas de force majeure</li>
-        </ul>
-        <p style="margin-top:12px;">Le vendeur est seul responsable du contenu de son annonce et de l'état réel du véhicule vendu.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 7 — Propriété intellectuelle</h2>
-        <p>L'ensemble du contenu du site AutoNet (design, code, textes, logos) est la propriété exclusive d'Armindo Lima et est protégé par le droit d'auteur. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Article 8 — Droit applicable</h2>
-        <p>Les présentes CGU sont soumises au droit français. En cas de litige, les tribunaux français seront seuls compétents.</p>
-      </div>
-
-    </div>
-
-    <div style="margin-top:40px;text-align:center;">
-      <button onclick="history.back()" class="btn btn-outline btn-lg">← Retour</button>
-    </div>
-  </section>
-</div>
-
 <!-- ══════════════════════════════════════════════ -->
 <!-- PAGE CONFIDENTIALITÉ -->
 <!-- ══════════════════════════════════════════════ -->
-<div id="page-confidentialite" class="page">
-  <section style="padding:60px 40px;max-width:860px;margin:0 auto;">
-    <div style="margin-bottom:40px;">
-      <div class="section-eyebrow">Juridique</div>
-      <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-1.5px;margin-bottom:8px;">Politique de Confidentialité</h1>
-      <p style="color:var(--texte-muted);font-size:14px;">Dernière mise à jour : juin 2025 — Conforme au RGPD</p>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:28px;font-size:15px;line-height:1.8;color:var(--texte);">
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">1. Responsable du traitement</h2>
-        <p>Le responsable du traitement des données personnelles est <strong>Armindo Lima</strong>, éditeur du site AutoNet (autonet-auto.fr).<br>Contact : <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);">contact@autonet-auto.fr</a></p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">2. Données collectées</h2>
-        <p>AutoNet collecte les données suivantes :</p>
-        <ul style="margin:12px 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li><strong>Données d'inscription</strong> : prénom, adresse email, mot de passe (chiffré)</li>
-          <li><strong>Données professionnelles</strong> (comptes pro) : raison sociale, SIRET, adresse, téléphone</li>
-          <li><strong>Données d'annonces</strong> : informations sur le véhicule, photos, localisation, prix</li>
-          <li><strong>Données de messagerie</strong> : messages échangés entre utilisateurs</li>
-          <li><strong>Données de navigation</strong> : adresse IP, type de navigateur (logs techniques)</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">3. Finalités du traitement</h2>
-        <p>Vos données sont utilisées pour :</p>
-        <ul style="margin:12px 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li>Gérer votre compte et vos annonces</li>
-          <li>Permettre la mise en relation entre acheteurs et vendeurs</li>
-          <li>Envoyer des notifications liées à vos annonces et messages</li>
-          <li>Archiver les annonces vendues à des fins de protection légale (24 mois)</li>
-          <li>Améliorer le service et prévenir les fraudes</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">4. Durée de conservation</h2>
-        <ul style="margin:0 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li><strong>Données de compte</strong> : conservées jusqu'à la suppression du compte</li>
-          <li><strong>Annonces actives</strong> : conservées jusqu'à leur suppression par le vendeur</li>
-          <li><strong>Annonces vendues</strong> : archivées 24 mois après la date de vente déclarée</li>
-          <li><strong>Annonces supprimées simplement</strong> : supprimées après 15 jours</li>
-          <li><strong>Messages</strong> : conservés jusqu'à suppression manuelle par le vendeur</li>
-        </ul>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">5. Vos droits (RGPD)</h2>
-        <p>Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez des droits suivants :</p>
-        <ul style="margin:12px 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li><strong>Droit d'accès</strong> : obtenir une copie de vos données</li>
-          <li><strong>Droit de rectification</strong> : corriger vos données inexactes</li>
-          <li><strong>Droit à l'effacement</strong> : demander la suppression de vos données</li>
-          <li><strong>Droit à la portabilité</strong> : recevoir vos données dans un format lisible</li>
-          <li><strong>Droit d'opposition</strong> : vous opposer à certains traitements</li>
-        </ul>
-        <p style="margin-top:12px;">Pour exercer ces droits : <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);">contact@autonet-auto.fr</a></p>
-        <p style="margin-top:8px;">En cas de litige, vous pouvez saisir la <strong>CNIL</strong> : <a href="https://www.cnil.fr" target="_blank" style="color:var(--bleu);">www.cnil.fr</a></p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">6. Hébergement et sous-traitants</h2>
-        <ul style="margin:0 0 0 20px;display:flex;flex-direction:column;gap:6px;">
-          <li><strong>Hébergement</strong> : GitHub Pages (Microsoft) — États-Unis</li>
-          <li><strong>Base de données</strong> : Supabase — Union Européenne</li>
-          <li><strong>Emails transactionnels</strong> : Zoho Mail, EmailJS</li>
-        </ul>
-        <p style="margin-top:12px;">Ces prestataires sont soumis à des obligations de confidentialité et ne peuvent utiliser vos données qu'aux fins prévues par le contrat.</p>
-      </div>
-
-    </div>
-    <div style="margin-top:40px;text-align:center;">
-      <button onclick="history.back()" class="btn btn-outline btn-lg">← Retour</button>
-    </div>
-  </section>
-</div>
-
 <!-- ══════════════════════════════════════════════ -->
 <!-- PAGE MENTIONS LÉGALES -->
 <!-- ══════════════════════════════════════════════ -->
-<div id="page-mentions" class="page">
-  <section style="padding:60px 40px;max-width:860px;margin:0 auto;">
-    <div style="margin-bottom:40px;">
-      <div class="section-eyebrow">Juridique</div>
-      <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(32px,5vw,48px);font-weight:800;letter-spacing:-1.5px;margin-bottom:8px;">Mentions Légales</h1>
-      <p style="color:var(--texte-muted);font-size:14px;">Conformément à la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l'économie numérique</p>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:20px;font-size:15px;line-height:1.8;color:var(--texte);">
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Éditeur du site</h2>
-        <p><strong>Nom :</strong> Armindo Lima<br>
-        <strong>Statut :</strong> Particulier / Porteur de projet<br>
-        <strong>Email :</strong> <a href="mailto:contact@autonet-auto.fr" style="color:var(--bleu);">contact@autonet-auto.fr</a><br>
-        <strong>Site :</strong> <a href="https://autonet-auto.fr" style="color:var(--bleu);">autonet-auto.fr</a></p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Hébergement</h2>
-        <p><strong>Hébergeur principal :</strong> GitHub Pages<br>
-        GitHub, Inc. — 88 Colin P Kelly Jr St, San Francisco, CA 94107, États-Unis<br><br>
-        <strong>Base de données :</strong> Supabase Inc.<br>
-        970 Toa Payoh North #07-04, Singapore 318992</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Propriété intellectuelle</h2>
-        <p>L'ensemble des éléments constituant le site AutoNet (design, code source, textes, images, logo) est la propriété exclusive d'Armindo Lima et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.<br><br>
-        Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans autorisation écrite préalable.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Limitation de responsabilité</h2>
-        <p>AutoNet est une plateforme d'intermédiation. Les annonces publiées sont sous l'entière responsabilité de leurs auteurs. AutoNet ne peut être tenu responsable du contenu des annonces ni des transactions effectuées entre utilisateurs.<br><br>
-        AutoNet s'efforce d'assurer la disponibilité du service mais ne peut garantir une accessibilité ininterrompue.</p>
-      </div>
-
-      <div style="background:var(--blanc);border:1.5px solid var(--border);border-radius:12px;padding:28px;">
-        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-bottom:12px;">Droit applicable</h2>
-        <p>Le présent site et ses mentions légales sont soumis au droit français. En cas de litige, les tribunaux français seront seuls compétents.</p>
-      </div>
-
-    </div>
-    <div style="margin-top:40px;text-align:center;">
-      <button onclick="history.back()" class="btn btn-outline btn-lg">← Retour</button>
-    </div>
-  </section>
-</div>
-
 <style>
 .legal-content { max-width: 860px; margin: 0 auto; padding: 60px 40px; }
 .legal-content h1 { font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(28px,4vw,42px); font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
