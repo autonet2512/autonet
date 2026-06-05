@@ -996,9 +996,12 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           </div>
         </div>
         <div class="sidebar-card" style="font-size:13px;color:var(--texte-muted);line-height:1.7;">
-          <div style="font-weight:700;color:var(--texte);margin-bottom:10px;">📍 Vendeur</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div style="font-weight:700;color:var(--texte);">📍 Vendeur</div>
+            <button id="btn-voir-profil" onclick="voirProfilVendeur(currentAnnonce && currentAnnonce.email)" style="background:none;border:1px solid var(--bleu-mid);color:var(--bleu);font-size:12px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;">👤 Voir le profil</button>
+          </div>
           <div id="detail-vendeur"></div>
-          <div style="margin-top:10px;color:var(--vert);font-weight:600;">✓ Profil vérifié</div>
+          <div id="detail-avg-stars-sidebar" style="margin-top:8px;color:#f59e0b;font-size:14px;"></div>
         </div>
       </div>
     </div>
@@ -1054,7 +1057,17 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <input type="text" id="f-finition" placeholder="Ex : S Line, GTI, RS, Sport, Luxury, Business...">
       <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">La finition précise le niveau d'équipement du véhicule.</p>
     </div>
-    <div class="form-group"><label>Localisation (Ville) *</label><input type="text" id="f-localisation" placeholder="Ex : Lyon"></div>
+    <div class="form-group">
+      <label>Localisation *</label>
+      <select id="f-region" style="background:var(--fond);border:1.5px solid var(--border);color:var(--texte);padding:11px 14px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;margin-bottom:8px;" onchange="onRegionChangeForm()">
+        <option value="">Sélectionner une région *</option>
+      </select>
+      <select id="f-dept" disabled style="background:var(--fond);border:1.5px solid var(--border);color:var(--texte);padding:11px 14px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;margin-bottom:8px;" onchange="onDeptChangeForm()">
+        <option value="">Sélectionner un département *</option>
+      </select>
+      <input type="text" id="f-localisation" placeholder="Ville (optionnel, ex: Lyon)" style="background:var(--fond);border:1.5px solid var(--border);color:var(--texte);padding:11px 14px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;">
+      <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">Sélectionnez votre région et département. La ville est optionnelle mais améliore la recherche.</p>
+    </div>
     <div class="form-group">
       <label>Description *</label>
       <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:8px;line-height:1.6;">
@@ -2308,6 +2321,7 @@ function showPage(page) {
     setTimeout(initOptions, 100); 
     setTimeout(initFormMarques, 100); 
     setTimeout(préremplirInfosVendeur, 150);
+    setTimeout(initLocationForm, 160);
   }
   if (page === 'accueil') setTimeout(initSearchMarques, 100);
 }
@@ -2532,13 +2546,16 @@ async function voirDetail(id) {
     chargerEntretien(id);
     chargerCT(id);
     // Load avg stars for vendor
-    db.from('avis').select('note').eq('vendeur_email', data.email).then(({ data: avisData }) => {
-      const avgEl = document.getElementById('detail-avg-stars');
-      if (avgEl && avisData && avisData.length > 0) {
-        const avg = avisData.reduce((s, a) => s + a.note, 0) / avisData.length;
-        avgEl.innerHTML = '★'.repeat(Math.round(avg)) + '☆'.repeat(5-Math.round(avg)) + ' <span style="font-size:11px;color:var(--texte-muted);">(' + avisData.length + ' avis)</span>';
-      }
-    });
+     db.from('avis').select('note').eq('vendeur_email', data.email).then(({ data: avisData }) => {
+       const avgEl = document.getElementById('detail-avg-stars');
+       const avgSidebar = document.getElementById('detail-avg-stars-sidebar');
+       if (avisData && avisData.length > 0) {
+         const avg = avisData.reduce((s, a) => s + a.note, 0) / avisData.length;
+         const starsHtml = '★'.repeat(Math.round(avg)) + '<span style="color:#d1d5db;">' + '☆'.repeat(5-Math.round(avg)) + '</span> <span style="font-size:11px;color:var(--texte-muted);">(' + avisData.length + ' avis)</span>';
+         if (avgEl) avgEl.innerHTML = starsHtml;
+         if (avgSidebar) avgSidebar.innerHTML = starsHtml;
+        }
+      });
     // Set phone button
     const appelWrapper = document.getElementById('btn-appel-wrapper');
     if (appelWrapper) {
@@ -3149,7 +3166,20 @@ async function publierAnnonce() {
   const prix = document.getElementById('f-prix').value;
   const carburant = document.getElementById('f-carburant').value;
   const type = document.getElementById('f-type').value;
-  const localisation = document.getElementById('f-localisation').value.trim();
+  const regionVal = document.getElementById('f-region') ? document.getElementById('f-region').value : '';
+  const deptVal = document.getElementById('f-dept') ? document.getElementById('f-dept').value : '';
+  const villeVal = document.getElementById('f-localisation') ? document.getElementById('f-localisation').value.trim() : '';
+  let localisation = '';
+  if (villeVal && deptVal) {
+    const deptName = deptVal.replace(/ *\([^)]*\)/, '').trim();
+    localisation = villeVal + ', ' + deptName;
+  } else if (villeVal) {
+    localisation = villeVal;
+  } else if (deptVal) {
+    localisation = deptVal.replace(/ *\([^)]*\)/, '').trim();
+  } else if (regionVal) {
+    localisation = regionVal;
+  }
   const description = document.getElementById('f-description').value.trim();
   const prenom = document.getElementById('f-prenom').value.trim();
   const email = document.getElementById('f-email').value.trim();
@@ -3157,8 +3187,12 @@ async function publierAnnonce() {
   const photosInput = document.getElementById('f-photos');
   const photos = photosInput ? Array.from(photosInput.files).slice(0, 10) : [];
 
-  if (!marque || !modele || !annee || !km || !prix || !carburant || !type || !localisation || !prenom || !email) {
+  if (!marque || !modele || !annee || !km || !prix || !carburant || !type || !prenom || !email) {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Veuillez remplir tous les champs obligatoires (*).</div>';
+    return;
+  }
+  if (!regionVal || !deptVal) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Veuillez sélectionner votre région et département.</div>';
     return;
   }
 
@@ -3861,6 +3895,35 @@ async function voirProfilVendeur(email) {
   }
 }
 
+// ── LOCALISATION FORM ──
+function initLocationForm() {
+  const regionSelect = document.getElementById('f-region');
+  if (!regionSelect) return;
+  if (regionSelect.options.length > 1) return; // already initialized
+  const regions = Object.keys(REGIONS_DEPARTEMENTS).sort();
+  regionSelect.innerHTML = '<option value="">Sélectionner une région *</option>' + regions.map(r => '<option value="' + r + '">' + r + '</option>').join('');
+}
+
+function onRegionChangeForm() {
+  const regionSelect = document.getElementById('f-region');
+  const deptSelect = document.getElementById('f-dept');
+  if (!regionSelect || !deptSelect) return;
+  const depts = REGIONS_DEPARTEMENTS[regionSelect.value] || [];
+  deptSelect.innerHTML = '<option value="">Sélectionner un département *</option>' + depts.map(d => '<option value="' + d + '">' + d + '</option>').join('');
+  deptSelect.disabled = depts.length === 0;
+}
+
+function onDeptChangeForm() {
+  const deptSelect = document.getElementById('f-dept');
+  const locInput = document.getElementById('f-localisation');
+  if (!deptSelect || !locInput) return;
+  // Auto-fill city with dept name as hint
+  if (!locInput.value && deptSelect.value) {
+    const deptName = deptSelect.value.replace(/\s*\(\d+[AB]?\)/, '').trim();
+    locInput.placeholder = 'Ex : ville dans ' + deptName;
+  }
+}
+
 // ── LOCALISATION SEARCH ──
 const REGIONS_DEPARTEMENTS = {
   'Auvergne-Rhône-Alpes': ['Ain (01)','Allier (03)','Ardèche (07)','Cantal (15)','Drôme (26)','Isère (38)','Loire (42)','Haute-Loire (43)','Puy-de-Dôme (63)','Rhône (69)','Savoie (73)','Haute-Savoie (74)'],
@@ -3900,6 +3963,34 @@ function initLocationSearch() {
       const locInput = document.getElementById('search-localisation');
       if (locInput) locInput.value = this.value ? this.value.replace(/\s*\(\d+[AB]?\)/, '') : '';
     });
+  }
+}
+
+// ── LOCALISATION FORMULAIRE ──
+function initLocationForm() {
+  const regionSelect = document.getElementById('f-region');
+  if (!regionSelect || regionSelect.options.length > 1) return;
+  const regions = Object.keys(REGIONS_DEPARTEMENTS).sort();
+  regionSelect.innerHTML = '<option value="">Sélectionner une région *</option>' + regions.map(r => '<option value="' + r + '">' + r + '</option>').join('');
+}
+
+function onRegionChangeForm() {
+  const regionSelect = document.getElementById('f-region');
+  const deptSelect = document.getElementById('f-dept');
+  if (!regionSelect || !deptSelect) return;
+  const depts = REGIONS_DEPARTEMENTS[regionSelect.value] || [];
+  deptSelect.innerHTML = '<option value="">Sélectionner un département *</option>' + depts.map(d => '<option value="' + d + '">' + d + '</option>').join('');
+  deptSelect.disabled = depts.length === 0;
+}
+
+function onDeptChangeForm() {
+  const deptSelect = document.getElementById('f-dept');
+  const locInput = document.getElementById('f-localisation');
+  if (!deptSelect || !locInput) return;
+  // Auto-fill city with department name as hint
+  if (!locInput.value) {
+    const deptName = deptSelect.value.replace(/\s*\(\d+[AB]?\)/, '').trim();
+    locInput.placeholder = 'Ville (ex: dans ' + deptName + ')';
   }
 }
 
@@ -4030,6 +4121,45 @@ async function soumettreAvis() {
   } catch(e) {
     alertEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:12px;">❌ ' + e.message + '</div>';
   }
+}
+
+// ── LOCALISATION FORMULAIRE ──
+function initLocationForm() {
+  const regionSelect = document.getElementById('f-region');
+  if (!regionSelect) return;
+  const regions = Object.keys(REGIONS_DEPARTEMENTS).sort();
+  regionSelect.innerHTML = '<option value="">Sélectionner une région *</option>' + regions.map(r => '<option value="' + r + '">' + r + '</option>').join('');
+}
+
+function onRegionChangeForm() {
+  const regionSelect = document.getElementById('f-region');
+  const deptSelect = document.getElementById('f-dept');
+  if (!regionSelect || !deptSelect) return;
+  const depts = REGIONS_DEPARTEMENTS[regionSelect.value] || [];
+  deptSelect.innerHTML = '<option value="">Sélectionner un département *</option>' + depts.map(d => '<option value="' + d + '">' + d + '</option>').join('');
+  deptSelect.disabled = depts.length === 0;
+  document.getElementById('f-localisation').value = '';
+}
+
+function onDeptChangeForm() {
+  const deptSelect = document.getElementById('f-dept');
+  const locInput = document.getElementById('f-localisation');
+  if (!deptSelect || !locInput) return;
+  // Extract city from dept name - remove (XX) part
+  const deptName = deptSelect.value.replace(/\s*\(\d+[AB]?\)\s*$/, '').trim();
+  locInput.placeholder = 'Ville dans ' + deptName + ' (ex: Lyon)';
+}
+
+function getLocalisationComplete() {
+  const region = document.getElementById('f-region') ? document.getElementById('f-region').value : '';
+  const dept = document.getElementById('f-dept') ? document.getElementById('f-dept').value : '';
+  const ville = document.getElementById('f-localisation') ? document.getElementById('f-localisation').value.trim() : '';
+  // Build location string: "Lyon, Rhône (69), Auvergne-Rhône-Alpes"
+  const parts = [];
+  if (ville) parts.push(ville);
+  if (dept) parts.push(dept);
+  if (region && !dept) parts.push(region);
+  return parts.join(', ');
 }
 
 // ── PRÉ-REMPLISSAGE INFOS VENDEUR ──
@@ -4627,6 +4757,7 @@ async function init() {
   initEmailJS();
   setTimeout(initSearchMarques, 200);
   setTimeout(initLocationSearch, 250);
+  setTimeout(initLocationForm, 260);
   const { data } = await db.auth.getSession();
   if (data.session) {
     currentUser = data.session.user;
