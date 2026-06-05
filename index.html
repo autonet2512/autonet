@@ -754,7 +754,14 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         <div class="sf"><label>Département</label>
           <select id="search-dept" disabled><option value="">Tous les départements</option></select>
         </div>
-        <div class="sf" style="display:none;"><input type="hidden" id="search-localisation"></div>
+        <div class="sf">
+          <label>Ville</label>
+          <div style="position:relative;">
+            <input type="text" id="search-ville-input" placeholder="Tapez une ville..." autocomplete="off" oninput="rechercherVillesSearch(this.value)" style="background:var(--blanc);border:1.5px solid var(--border);color:var(--texte);padding:11px 14px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;">
+            <div id="search-villes-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--blanc);border:1.5px solid var(--bleu-mid);border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:4px;"></div>
+          </div>
+        </div>
+        <input type="hidden" id="search-localisation">
         <div class="sf"><label>Marque</label>
           <select id="search-marque-select">
             <option value="">Toutes les marques</option>
@@ -1065,8 +1072,11 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <select id="f-dept" disabled style="background:var(--fond);border:1.5px solid var(--border);color:var(--texte);padding:11px 14px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;margin-bottom:8px;" onchange="onDeptChangeForm()">
         <option value="">Sélectionner un département *</option>
       </select>
-      <input type="text" id="f-localisation" placeholder="Ville (optionnel, ex: Lyon)" style="background:var(--fond);border:1.5px solid var(--border);color:var(--texte);padding:11px 14px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;">
-      <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">Sélectionnez votre région et département. La ville est optionnelle mais améliore la recherche.</p>
+      <div style="position:relative;">
+        <input type="text" id="f-localisation" placeholder="Tapez votre ville *" autocomplete="off" oninput="rechercherVillesForm(this.value)" style="background:var(--fond);border:1.5px solid var(--border);color:var(--texte);padding:11px 14px;border-radius:9px;font-family:'Instrument Sans',sans-serif;font-size:14px;outline:none;width:100%;">
+        <div id="f-villes-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--blanc);border:1.5px solid var(--bleu-mid);border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:4px;"></div>
+      </div>
+      <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">Sélectionnez votre région et département puis tapez votre ville.</p>
     </div>
     <div class="form-group">
       <label>Description *</label>
@@ -2507,7 +2517,7 @@ function rechercherAnnonces() {
     chMin: document.getElementById('search-ch-min') ? document.getElementById('search-ch-min').value : '',
     chMax: document.getElementById('search-ch-max') ? document.getElementById('search-ch-max').value : '',
     finition: document.getElementById('search-finition') ? document.getElementById('search-finition').value.trim() : '',
-    localisation: document.getElementById('search-localisation') ? document.getElementById('search-localisation').value.trim() : '',
+    localisation: document.getElementById('search-localisation') ? document.getElementById('search-localisation').value.trim() : (document.getElementById('search-ville-input') ? document.getElementById('search-ville-input').value.trim() : ''),
     region: document.getElementById('search-region') ? document.getElementById('search-region').value : '',
     dept: document.getElementById('search-dept') ? document.getElementById('search-dept').value : '',
   };
@@ -2516,7 +2526,7 @@ function rechercherAnnonces() {
 }
 
 function reinitialiserRecherche() {
-  ['search-marque','search-modele','search-budget','search-budget-min','search-km','search-km-min','search-annee-min','search-annee-max','search-ch-min','search-ch-max','search-finition'].forEach(id => {
+  ['search-marque','search-modele','search-budget','search-budget-min','search-km','search-km-min','search-annee-min','search-annee-max','search-ch-min','search-ch-max','search-finition','search-ville-input','search-localisation'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -3193,6 +3203,10 @@ async function publierAnnonce() {
   }
   if (!regionVal || !deptVal) {
     alertEl.innerHTML = '<div class="alert alert-error">⚠️ Veuillez sélectionner votre région et département.</div>';
+    return;
+  }
+  if (!villeVal) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Veuillez entrer votre ville.</div>';
     return;
   }
 
@@ -3965,6 +3979,84 @@ function initLocationSearch() {
     });
   }
 }
+
+// ── API VILLES ──
+let villeSearchTimeout = null;
+
+async function rechercherVilles(query, deptCode, suggestionsId, inputId) {
+  const suggestionsEl = document.getElementById(suggestionsId);
+  if (!suggestionsEl) return;
+  if (!query || query.length < 2) { suggestionsEl.style.display = 'none'; return; }
+
+  clearTimeout(villeSearchTimeout);
+  villeSearchTimeout = setTimeout(async () => {
+    try {
+      let url = 'https://geo.api.gouv.fr/communes?nom=' + encodeURIComponent(query) + '&fields=nom,codesPostaux&boost=population&limit=8';
+      if (deptCode) url += '&codeDepartement=' + deptCode;
+
+      const response = await fetch(url);
+      const villes = await response.json();
+
+      if (!villes || villes.length === 0) {
+        suggestionsEl.style.display = 'none';
+        return;
+      }
+
+      suggestionsEl.innerHTML = '';
+      villes.forEach(function(v) {
+        var div = document.createElement('div');
+        div.style.cssText = 'padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid #e5e7eb;';
+        div.textContent = v.nom + (v.codesPostaux && v.codesPostaux[0] ? ' (' + v.codesPostaux[0] + ')' : '');
+        div.addEventListener('mouseenter', function() { this.style.background = '#eff6ff'; });
+        div.addEventListener('mouseleave', function() { this.style.background = ''; });
+        (function(nom) { div.addEventListener('click', function() { selectionnerVille(nom, suggestionsId, inputId); }); })(v.nom);
+        suggestionsEl.appendChild(div);
+      });
+      suggestionsEl.style.display = 'block';
+    } catch(e) {
+      suggestionsEl.style.display = 'none';
+    }
+  }, 300);
+}
+
+function selectionnerVille(nom, suggestionsId, inputId) {
+  const input = document.getElementById(inputId);
+  const suggestions = document.getElementById(suggestionsId);
+  if (input) input.value = nom;
+  if (suggestions) suggestions.style.display = 'none';
+}
+
+function getDeptCodeForm() {
+  const deptSelect = document.getElementById('f-dept');
+  if (!deptSelect || !deptSelect.value) return null;
+  const match = deptSelect.value.match(/\((\d+[AB]?)\)/);
+  return match ? match[1] : null;
+}
+
+function getDeptCodeSearch() {
+  const deptSelect = document.getElementById('search-dept');
+  if (!deptSelect || !deptSelect.value) return null;
+  const match = deptSelect.value.match(/\((\d+[AB]?)\)/);
+  return match ? match[1] : null;
+}
+
+function rechercherVillesForm(query) {
+  rechercherVilles(query, getDeptCodeForm(), 'f-villes-suggestions', 'f-localisation');
+}
+
+function rechercherVillesSearch(query) {
+  rechercherVilles(query, getDeptCodeSearch(), 'search-villes-suggestions', 'search-ville-input');
+  // Also update hidden localisation input
+  document.getElementById('search-localisation').value = query;
+}
+
+// Close suggestions on click outside
+document.addEventListener('click', function(e) {
+  ['f-villes-suggestions', 'search-villes-suggestions'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.contains(e.target)) el.style.display = 'none';
+  });
+});
 
 // ── LOCALISATION FORMULAIRE ──
 function initLocationForm() {
