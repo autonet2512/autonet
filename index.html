@@ -762,6 +762,8 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           </div>
         </div>
         <input type="hidden" id="search-localisation">
+        <input type="hidden" id="search-lat">
+        <input type="hidden" id="search-lng">
         <div class="sf"><label>Marque</label>
           <select id="search-marque-select">
             <option value="">Toutes les marques</option>
@@ -785,6 +787,17 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         </div>
         <div class="sf"><label>Finition</label>
           <input type="text" id="search-finition" placeholder="Ex : S Line, GTI...">
+        </div>
+        <div class="sf"><label>Rayon (km)</label>
+          <select id="search-rayon">
+            <option value="">Tous</option>
+            <option value="5">5 km</option>
+            <option value="10">10 km</option>
+            <option value="20">20 km</option>
+            <option value="50">50 km</option>
+            <option value="100">100 km</option>
+            <option value="200">200 km</option>
+          </select>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:14px;align-items:end;margin-bottom:14px;">
@@ -1077,6 +1090,8 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         <div id="f-villes-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--blanc);border:1.5px solid var(--bleu-mid);border-radius:9px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:4px;"></div>
       </div>
       <p style="font-size:12px;color:var(--texte-light);margin-top:4px;">Sélectionnez votre région et département puis tapez votre ville.</p>
+      <input type="hidden" id="f-lat">
+      <input type="hidden" id="f-lng">
     </div>
     <div class="form-group">
       <label>Description *</label>
@@ -2398,7 +2413,25 @@ async function chargerAccueilListings() {
       container.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🚗</div><h3>Aucune annonce pour l'instant</h3><p>Soyez le premier à publier !</p></div>`;
       return;
     }
-    container.innerHTML = data.map(renderCard).join('');
+    // Filter by radius if GPS coords provided
+    let filteredData = data;
+    if (params.searchLat && params.searchLng && params.rayon) {
+      const lat1 = parseFloat(params.searchLat);
+      const lng1 = parseFloat(params.searchLng);
+      const rayonKm = parseInt(params.rayon);
+      filteredData = data.filter(a => {
+        if (!a.lat || !a.lng) return true; // keep if no GPS
+        const R = 6371;
+        const dLat = (a.lat - lat1) * Math.PI / 180;
+        const dLng = (a.lng - lng1) * Math.PI / 180;
+        const x = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(a.lat * Math.PI / 180) *
+          Math.sin(dLng/2) * Math.sin(dLng/2);
+        const dist = R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+        return dist <= rayonKm;
+      });
+    }
+    container.innerHTML = filteredData.map(renderCard).join('');
     setTimeout(() => chargerPhotosCards(data, 'page-accueil'), 100);
     setTimeout(() => chargerBadgesEntretien(data, 'page-accueil'), 200);
     setTimeout(() => chargerBadgesCT(data, 'page-accueil'), 300);
@@ -2472,11 +2505,10 @@ async function chargerAnnonces(params = {}, page = 1) {
     if (params.chMax) query = query.lte('puissance', parseInt(params.chMax));
     if (params.finition) query = query.ilike('finition', `%${params.finition}%`);
     if (params.dept && params.dept !== '') {
-      // Extract city name from dept string like "Rhône (69)"
-      const deptName = params.dept.replace(/\s*\(\d+[AB]?\)/, '').trim();
-      query = query.ilike('localisation', `%${deptName}%`);
-    } else if (params.localisation) {
-      query = query.ilike('localisation', `%${params.localisation}%`);
+      const deptName = params.dept.replace(/ *\([^)]*\)/g, '').trim();
+      query = query.ilike('localisation', '%' + deptName + '%');
+    } else if (params.localisation && !params.searchLat) {
+      query = query.ilike('localisation', '%' + params.localisation + '%');
     }
     const { data, error, count } = await query;
     totalAnnonces = count || 0;
@@ -2486,12 +2518,30 @@ async function chargerAnnonces(params = {}, page = 1) {
       return;
     }
     document.getElementById('annonces-titre').textContent = `${data.length} véhicule${data.length > 1 ? 's' : ''} disponible${data.length > 1 ? 's' : ''}`;
-    container.innerHTML = data.map(renderCard).join('');
-    setTimeout(() => chargerPhotosCards(data, 'page-annonces'), 100);
-    setTimeout(() => chargerBadgesEntretien(data, 'page-annonces'), 200);
-    setTimeout(() => chargerBadgesCT(data, 'page-annonces'), 300);
+    // Filter by radius if GPS coords provided
+    let filteredData = data;
+    if (params.searchLat && params.searchLng && params.rayon) {
+      const lat1 = parseFloat(params.searchLat);
+      const lng1 = parseFloat(params.searchLng);
+      const rayonKm = parseInt(params.rayon);
+      filteredData = data.filter(a => {
+        if (!a.lat || !a.lng) return true; // keep if no GPS
+        const R = 6371;
+        const dLat = (a.lat - lat1) * Math.PI / 180;
+        const dLng = (a.lng - lng1) * Math.PI / 180;
+        const x = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(a.lat * Math.PI / 180) *
+          Math.sin(dLng/2) * Math.sin(dLng/2);
+        const dist = R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+        return dist <= rayonKm;
+      });
+    }
+    container.innerHTML = filteredData.map(renderCard).join('');
+    setTimeout(() => chargerPhotosCards(filteredData, 'page-annonces'), 100);
+    setTimeout(() => chargerBadgesEntretien(filteredData, 'page-annonces'), 200);
+    setTimeout(() => chargerBadgesCT(filteredData, 'page-annonces'), 300);
     setTimeout(mettreAJourBoutonsSauvegarde, 300);
-    setTimeout(() => chargerCompteursSauvegardes(data, 'page-annonces'), 400);
+    setTimeout(() => chargerCompteursSauvegardes(filteredData, 'page-annonces'), 400);
     // Render pagination
     renderPagination(totalAnnonces, currentPageAnnonces);
   } catch(e) {
@@ -2518,6 +2568,9 @@ function rechercherAnnonces() {
     chMax: document.getElementById('search-ch-max') ? document.getElementById('search-ch-max').value : '',
     finition: document.getElementById('search-finition') ? document.getElementById('search-finition').value.trim() : '',
     localisation: document.getElementById('search-localisation') ? document.getElementById('search-localisation').value.trim() : (document.getElementById('search-ville-input') ? document.getElementById('search-ville-input').value.trim() : ''),
+    searchLat: document.getElementById('search-lat') ? document.getElementById('search-lat').value : '',
+    searchLng: document.getElementById('search-lng') ? document.getElementById('search-lng').value : '',
+    rayon: document.getElementById('search-rayon') ? document.getElementById('search-rayon').value : '',
     region: document.getElementById('search-region') ? document.getElementById('search-region').value : '',
     dept: document.getElementById('search-dept') ? document.getElementById('search-dept').value : '',
   };
@@ -2530,7 +2583,7 @@ function reinitialiserRecherche() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['search-type','search-boite','search-marque-select','search-modele-select','search-region','search-dept'].forEach(id => {
+  ['search-type','search-boite','search-marque-select','search-modele-select','search-region','search-dept','search-rayon'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.value = ''; if (id === 'search-modele-select') el.disabled = true; }
   });
@@ -3228,6 +3281,8 @@ async function publierAnnonce() {
       puissance: puissance ? parseInt(puissance) : null,
       boite: boite || null,
       finition: finition || null,
+      lat: document.getElementById('f-lat') && document.getElementById('f-lat').value ? parseFloat(document.getElementById('f-lat').value) : null,
+      lng: document.getElementById('f-lng') && document.getElementById('f-lng').value ? parseFloat(document.getElementById('f-lng').value) : null,
       email_verifie: currentUser ? (currentUser.email_confirmed_at !== null) : false,
       type_vendeur: currentUser ? (currentUser.user_metadata?.type_compte || 'particulier') : 'particulier',
       raison_sociale: currentUser ? (currentUser.user_metadata?.raison_sociale || null) : null,
@@ -4019,11 +4074,42 @@ async function rechercherVilles(query, deptCode, suggestionsId, inputId) {
   }, 300);
 }
 
-function selectionnerVille(nom, suggestionsId, inputId) {
+async function selectionnerVille(nom, suggestionsId, inputId) {
   const input = document.getElementById(inputId);
   const suggestions = document.getElementById(suggestionsId);
   if (input) input.value = nom;
   if (suggestions) suggestions.style.display = 'none';
+
+  // If form deposit - save GPS coords
+  if (inputId === 'f-localisation') {
+    try {
+      const deptCode = getDeptCodeForm();
+      let url = 'https://geo.api.gouv.fr/communes?nom=' + encodeURIComponent(nom) + '&fields=nom,centre&boost=population&limit=1';
+      if (deptCode) url += '&codeDepartement=' + deptCode;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data && data[0] && data[0].centre) {
+        document.getElementById('f-lat').value = data[0].centre.coordinates[1];
+        document.getElementById('f-lng').value = data[0].centre.coordinates[0];
+      }
+    } catch(e) {}
+  }
+
+  // If search - save GPS coords for radius search
+  if (inputId === 'search-ville-input') {
+    try {
+      const deptCode = getDeptCodeSearch();
+      let url = 'https://geo.api.gouv.fr/communes?nom=' + encodeURIComponent(nom) + '&fields=nom,centre&boost=population&limit=1';
+      if (deptCode) url += '&codeDepartement=' + deptCode;
+      const resp = await fetch(url);
+      const data = await resp.json();
+      if (data && data[0] && data[0].centre) {
+        document.getElementById('search-lat').value = data[0].centre.coordinates[1];
+        document.getElementById('search-lng').value = data[0].centre.coordinates[0];
+      }
+    } catch(e) {}
+    document.getElementById('search-localisation').value = nom;
+  }
 }
 
 function getDeptCodeForm() {
