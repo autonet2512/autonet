@@ -155,7 +155,7 @@ nav {
 
 /* ── DETAIL ── */
 .detail-section { padding: 40px; max-width: 1280px; margin: 0 auto; }
-.detail-grid { display: grid; grid-template-columns: 1fr 380px; gap: 32px; align-items: start; }
+.detail-grid { display: grid; grid-template-columns: 1fr 380px; gap: 32px; align-items: start; overflow: hidden; }
 .detail-main-img {
   border-radius: var(--radius); background: var(--bleu-pale); aspect-ratio: 16/9;
   display: flex; align-items: center; justify-content: center; font-size: 80px;
@@ -165,7 +165,7 @@ nav {
 .fiche-item { display: flex; justify-content: space-between; padding: 12px 16px; background: var(--fond); border-radius: 9px; font-size: 14px; }
 .fiche-key { color: var(--texte-muted); font-weight: 500; }
 .fiche-val { font-weight: 600; }
-.detail-sidebar { position: sticky; top: 86px; display: flex; flex-direction: column; gap: 16px; }
+.detail-sidebar { position: sticky; top: 86px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .sidebar-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 24px; }
 .annonce-price-big { font-family: 'Bricolage Grotesque', sans-serif; font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
 .annonce-price-sub { font-size: 13px; color: var(--texte-light); margin-bottom: 20px; }
@@ -733,13 +733,30 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
   .listing-list-bottom { flex-direction: column; align-items: flex-start; gap: 8px; }
 
   /* DETAIL */
-  .detail-section { padding: 12px; }
-  .detail-grid { grid-template-columns: 1fr !important; gap: 12px; }
+  .detail-section { padding: 12px; overflow-x: hidden; }
+  .detail-grid { grid-template-columns: 1fr !important; gap: 12px; display: flex !important; flex-direction: column !important; }
+  .detail-sidebar { position: relative !important; top: 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; order: 2; }
+  .detail-content { order: 1; width: 100%; overflow: hidden; }
   .annonce-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
   .annonce-tab { white-space: nowrap; font-size: 12px; padding: 8px 10px; }
-  .annonce-tab-content { padding: 12px !important; }
-  .sidebar-card { padding: 12px; }
+  .annonce-tab-content { padding: 12px !important; overflow-x: hidden; width: 100%; box-sizing: border-box; }
+  .sidebar-card { padding: 12px; width: 100%; box-sizing: border-box; overflow: hidden; }
   .detail-price { font-size: 24px; }
+  /* Fix sidebar full width */
+  .detail-sidebar { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; position: relative !important; top: 0 !important; }
+  .sidebar-actions { flex-direction: column; gap: 8px; width: 100%; }
+  .sidebar-actions .btn { width: 100% !important; justify-content: center !important; box-sizing: border-box; }
+  .btn-lg { width: 100% !important; justify-content: center !important; box-sizing: border-box; }
+  /* Fix options */
+  .options-tags { flex-wrap: wrap !important; width: 100%; overflow: hidden; }
+  .option-tag { font-size: 12px !important; }
+  /* Fix score */
+  .score-global { width: 100%; box-sizing: border-box; }
+  /* Fix share buttons */
+  #page-detail div[style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: 1fr 1fr !important; }
+  /* General */
+  * { max-width: 100%; box-sizing: border-box; }
+  img { max-width: 100%; }
   .fiche-grid { grid-template-columns: 1fr !important; gap: 0; }
   .fiche-item { display: flex !important; flex-direction: column !important; align-items: flex-start !important; padding: 10px 14px; border-bottom: 1px solid var(--border); }
   .fiche-key { font-size: 11px; color: var(--texte-muted); font-weight: 500; margin-bottom: 2px; }
@@ -1489,7 +1506,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         <h2 class="section-title" id="print-titre">Récapitulatif de vente</h2>
       </div>
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-primary" onclick="window.print()">🖨️ Imprimer</button>
+        <button class="btn btn-primary" onclick="imprimerOuPartager()">🖨️ Imprimer / Partager</button>
         <button class="btn btn-outline" onclick="history.back()">← Retour</button>
       </div>
     </div>
@@ -4401,6 +4418,39 @@ async function sauvegarderModification() {
 }
 
 // ── IMPRESSION ANNONCE ARCHIVÉE ──
+async function imprimerOuPartager() {
+  const titre = document.getElementById('print-titre') ? document.getElementById('print-titre').textContent : 'AutoNet';
+  const fiche = document.getElementById('print-fiche') ? document.getElementById('print-fiche').innerText : '';
+  const description = document.getElementById('print-description') ? document.getElementById('print-description').textContent : '';
+  const vendeur = document.getElementById('print-vente') ? document.getElementById('print-vente').innerText : '';
+
+  const texte = '🚗 ' + titre + '\n\n' +
+    '=== FICHE TECHNIQUE ===\n' + fiche + '\n\n' +
+    '=== DESCRIPTION ===\n' + description + '\n\n' +
+    '=== INFORMATIONS DE VENTE ===\n' + vendeur + '\n\n' +
+    'Document AutoNet — autonet-auto.fr\n' +
+    'Protection légale Art. 1641 Code Civil';
+
+  // Use Web Share API (works on iOS Safari and Capacitor)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Récapitulatif — ' + titre,
+        text: texte
+      });
+    } catch(e) {
+      if (e.name !== 'AbortError') {
+        console.error('Share error:', e);
+      }
+    }
+  } else {
+    // Fallback for desktop
+    try { window.print(); } catch(e) {
+      alert('Partagez cette page ou faites une capture écran.');
+    }
+  }
+}
+
 async function imprimerAnnonce(id) {
   showPage('print');
   try {
@@ -4674,48 +4724,7 @@ function updateMobileMenu() {
 }
 
 // ── MENU MOBILE ──
-function toggleMobileMenu() {
-  const menu = document.getElementById('mobile-menu');
-  if (menu.style.display === 'none') {
-    openMobileMenu();
-  } else {
-    closeMobileMenu();
-  }
-}
 
-function openMobileMenu() {
-  const menu = document.getElementById('mobile-menu');
-  menu.style.display = 'block';
-  document.getElementById('mobile-menu-btn').textContent = '✕';
-  
-  // Update auth buttons in mobile menu
-  const authDiv = document.getElementById('mobile-nav-auth');
-  const decoBtn = document.getElementById('mobile-deconnexion');
-  if (currentUser) {
-    authDiv.innerHTML = '<div style="padding:12px 16px;background:var(--bleu-pale);border-radius:8px;font-size:13px;color:var(--bleu);font-weight:600;">👋 ' + (currentUser.user_metadata?.prenom || currentUser.email) + '</div>';
-    if (decoBtn) decoBtn.style.display = 'block';
-  } else {
-    const btnConnexion = document.createElement('a');
-    btnConnexion.className = 'btn btn-outline';
-    btnConnexion.style.justifyContent = 'center';
-    btnConnexion.textContent = 'Se connecter';
-    btnConnexion.addEventListener('click', () => { showPage('connexion'); closeMobileMenu(); });
-    const btnInscription = document.createElement('a');
-    btnInscription.className = 'btn btn-primary';
-    btnInscription.style.justifyContent = 'center';
-    btnInscription.textContent = "S'inscrire";
-    btnInscription.addEventListener('click', () => { showPage('inscription'); closeMobileMenu(); });
-    authDiv.innerHTML = '';
-    authDiv.appendChild(btnConnexion);
-    authDiv.appendChild(btnInscription);
-    if (decoBtn) decoBtn.style.display = 'none';
-  }
-}
-
-function closeMobileMenu() {
-  document.getElementById('mobile-menu').style.display = 'none';
-  document.getElementById('mobile-menu-btn').textContent = '☰';
-}
 
 // ── INIT ──
 async function init() {
