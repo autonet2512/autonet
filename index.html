@@ -4423,15 +4423,50 @@ async function imprimerOuPartager() {
   const fiche = document.getElementById('print-fiche') ? document.getElementById('print-fiche').innerText : '';
   const description = document.getElementById('print-description') ? document.getElementById('print-description').textContent : '';
   const vendeur = document.getElementById('print-vente') ? document.getElementById('print-vente').innerText : '';
+  const options = document.getElementById('print-options') ? document.getElementById('print-options').innerText : '';
+  const entretien = document.getElementById('print-entretien') ? document.getElementById('print-entretien').innerText : '';
+  const ct = document.getElementById('print-ct') ? document.getElementById('print-ct').innerText : '';
 
-  const texte = '🚗 ' + titre + '\n\n' +
-    '=== FICHE TECHNIQUE ===\n' + fiche + '\n\n' +
-    '=== DESCRIPTION ===\n' + description + '\n\n' +
-    '=== INFORMATIONS DE VENTE ===\n' + vendeur + '\n\n' +
-    'Document AutoNet — autonet-auto.fr\n' +
-    'Protection légale Art. 1641 Code Civil';
+  let texte = '🚗 ' + titre + '\n';
+  texte += '━━━━━━━━━━━━━━━━━━━━\n\n';
 
-  // Use Web Share API (works on iOS Safari and Capacitor)
+  texte += '📋 FICHE TECHNIQUE\n';
+  texte += '━━━━━━━━━━━━━━━━━━━━\n';
+  texte += fiche + '\n\n';
+
+  if (description) {
+    texte += '📝 DESCRIPTION\n';
+    texte += '━━━━━━━━━━━━━━━━━━━━\n';
+    texte += description + '\n\n';
+  }
+
+  if (options) {
+    texte += '⚙️ OPTIONS & ÉQUIPEMENTS\n';
+    texte += '━━━━━━━━━━━━━━━━━━━━\n';
+    texte += options + '\n\n';
+  }
+
+  if (entretien) {
+    texte += '🔧 HISTORIQUE ENTRETIEN\n';
+    texte += '━━━━━━━━━━━━━━━━━━━━\n';
+    texte += entretien + '\n\n';
+  }
+
+  if (ct) {
+    texte += '✅ CONTRÔLE TECHNIQUE\n';
+    texte += '━━━━━━━━━━━━━━━━━━━━\n';
+    texte += ct + '\n\n';
+  }
+
+  texte += '📅 INFORMATIONS DE VENTE\n';
+  texte += '━━━━━━━━━━━━━━━━━━━━\n';
+  texte += vendeur + '\n\n';
+
+  texte += '━━━━━━━━━━━━━━━━━━━━\n';
+  texte += 'Document AutoNet — autonet-auto.fr\n';
+  texte += 'Protection légale Art. 1641 & 1645 Code Civil\n';
+  texte += 'Généré le ' + new Date().toLocaleDateString('fr-FR');
+
   if (navigator.share) {
     try {
       await navigator.share({
@@ -4439,12 +4474,9 @@ async function imprimerOuPartager() {
         text: texte
       });
     } catch(e) {
-      if (e.name !== 'AbortError') {
-        console.error('Share error:', e);
-      }
+      if (e.name !== 'AbortError') console.error('Share error:', e);
     }
   } else {
-    // Fallback for desktop
     try { window.print(); } catch(e) {
       alert('Partagez cette page ou faites une capture écran.');
     }
