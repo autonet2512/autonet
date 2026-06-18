@@ -6,6 +6,7 @@
 <title>AutoNet — L'annonce automobile sans surprise</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root {
@@ -1506,7 +1507,7 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         <h2 class="section-title" id="print-titre">Récapitulatif de vente</h2>
       </div>
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-primary" onclick="imprimerOuPartager()">🖨️ Imprimer / Partager</button>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="partagerRecap()">📤 Partager le récapitulatif</button>
         <button class="btn btn-outline" onclick="history.back()">← Retour</button>
       </div>
     </div>
@@ -4418,14 +4419,231 @@ async function sauvegarderModification() {
 }
 
 // ── IMPRESSION ANNONCE ARCHIVÉE ──
-async function imprimerOuPartager() {
-  const titre = document.getElementById('print-titre') ? document.getElementById('print-titre').textContent : 'AutoNet';
-  const fiche = document.getElementById('print-fiche') ? document.getElementById('print-fiche').innerText : '';
-  const description = document.getElementById('print-description') ? document.getElementById('print-description').textContent : '';
-  const vendeur = document.getElementById('print-vente') ? document.getElementById('print-vente').innerText : '';
-  const options = document.getElementById('print-options') ? document.getElementById('print-options').innerText : '';
-  const entretien = document.getElementById('print-entretien') ? document.getElementById('print-entretien').innerText : '';
-  const ct = document.getElementById('print-ct') ? document.getElementById('print-ct').innerText : '';
+function getRecapData() {
+  return {
+    titre: document.getElementById('print-titre') ? document.getElementById('print-titre').textContent : 'AutoNet',
+    fiche: document.getElementById('print-fiche') ? document.getElementById('print-fiche').innerText : '',
+    description: document.getElementById('print-description') ? document.getElementById('print-description').textContent : '',
+    vendeur: document.getElementById('print-vente') ? document.getElementById('print-vente').innerText : '',
+    options: document.getElementById('print-options') ? document.getElementById('print-options').innerText : '',
+    entretien: document.getElementById('print-entretien') ? document.getElementById('print-entretien').innerText : '',
+    ct: document.getElementById('print-ct') ? document.getElementById('print-ct').innerText : ''
+  };
+}
+
+async function partagerRecap() {
+  const d = getRecapData();
+  
+  let texte = '';
+  texte += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  texte += '  🚗 AUTONET — RÉCAPITULATIF\n';
+  texte += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  texte += '  ' + d.titre + '\n\n';
+
+  texte += '┌─ 📋 FICHE TECHNIQUE ──────────┐\n';
+  d.fiche.split('\n').filter(l => l.trim()).forEach(l => {
+    texte += '│  ' + l.trim() + '\n';
+  });
+  texte += '└───────────────────────────────┘\n\n';
+
+  if (d.description) {
+    texte += '┌─ 📝 DESCRIPTION ──────────────┐\n';
+    texte += '│  ' + d.description.trim() + '\n';
+    texte += '└───────────────────────────────┘\n\n';
+  }
+
+  if (d.options) {
+    texte += '┌─ ⚙️ OPTIONS & ÉQUIPEMENTS ────┐\n';
+    d.options.split('\n').filter(l => l.trim()).forEach(l => {
+      texte += '│  ✓ ' + l.trim() + '\n';
+    });
+    texte += '└───────────────────────────────┘\n\n';
+  }
+
+  if (d.entretien) {
+    texte += '┌─ 🔧 HISTORIQUE ENTRETIEN ─────┐\n';
+    d.entretien.split('\n').filter(l => l.trim()).forEach(l => {
+      texte += '│  ' + l.trim() + '\n';
+    });
+    texte += '└───────────────────────────────┘\n\n';
+  }
+
+  if (d.ct) {
+    texte += '┌─ ✅ CONTRÔLE TECHNIQUE ───────┐\n';
+    d.ct.split('\n').filter(l => l.trim()).forEach(l => {
+      texte += '│  ' + l.trim() + '\n';
+    });
+    texte += '└───────────────────────────────┘\n\n';
+  }
+
+  texte += '┌─ 📅 INFORMATIONS DE VENTE ────┐\n';
+  d.vendeur.split('\n').filter(l => l.trim()).forEach(l => {
+    texte += '│  ' + l.trim() + '\n';
+  });
+  texte += '└───────────────────────────────┘\n\n';
+
+  texte += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  texte += '  AutoNet — autonet-auto.fr\n';
+  texte += '  ⚖️ Art. 1641 & 1645 Code Civil\n';
+  texte += '  Généré le ' + new Date().toLocaleDateString('fr-FR') + '\n';
+  texte += '━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Récapitulatif AutoNet — ' + d.titre,
+        text: texte
+      });
+    } catch(e) {
+      if (e.name !== 'AbortError') console.error('Share error:', e);
+    }
+  } else {
+    // Desktop fallback
+    try { window.print(); } catch(e) {
+      prompt('Copiez ce récapitulatif :', texte);
+    }
+  }
+}
+
+async function genererPDF() {
+  const d = getRecapData();
+  const titre = d.titre;
+  const fiche = d.fiche;
+  const description = d.description;
+  const vendeur = d.vendeur;
+  const options = d.options;
+  const entretien = d.entretien;
+  const ct = d.ct;
+
+  // Generate PDF with jsPDF
+  if (window.jspdf && window.jspdf.jsPDF) {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 15;
+      const maxW = pageW - margin * 2;
+      let y = 20;
+
+      const addText = (text, size, bold, color) => {
+        doc.setFontSize(size || 11);
+        doc.setFont('helvetica', bold ? 'bold' : 'normal');
+        doc.setTextColor(color || '#000000');
+        const lines = doc.splitTextToSize(text, maxW);
+        lines.forEach(line => {
+          if (y > 270) { doc.addPage(); y = 20; }
+          doc.text(line, margin, y);
+          y += size ? size * 0.45 : 6;
+        });
+      };
+
+      const addSection = (title) => {
+        y += 4;
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.setFillColor(18, 70, 200);
+        doc.rect(margin, y - 5, maxW, 8, 'F');
+        doc.setTextColor('#ffffff');
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin + 2, y);
+        doc.setTextColor('#000000');
+        y += 8;
+      };
+
+      const addLine = () => {
+        doc.setDrawColor(220, 220, 220);
+        doc.line(margin, y, margin + maxW, y);
+        y += 4;
+      };
+
+      // HEADER
+      doc.setFillColor(18, 70, 200);
+      doc.rect(0, 0, pageW, 30, 'F');
+      doc.setTextColor('#ffffff');
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text('AutoNet', margin, 18);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('autonet-auto.fr', pageW - margin - 30, 18);
+      y = 40;
+
+      // TITRE
+      addText(titre, 16, true, '#1246C8');
+      y += 4;
+      addLine();
+
+      // FICHE TECHNIQUE
+      addSection('📋 FICHE TECHNIQUE');
+      fiche.split('\n').filter(l => l.trim()).forEach(line => {
+        addText(line, 10, false, '#333333');
+      });
+      y += 4;
+
+      // DESCRIPTION
+      if (description) {
+        addSection('📝 DESCRIPTION');
+        addText(description, 10, false, '#333333');
+        y += 4;
+      }
+
+      // OPTIONS
+      if (options) {
+        addSection('⚙️ OPTIONS & ÉQUIPEMENTS');
+        addText(options, 10, false, '#333333');
+        y += 4;
+      }
+
+      // ENTRETIEN
+      if (entretien) {
+        addSection('🔧 HISTORIQUE ENTRETIEN');
+        entretien.split('\n').filter(l => l.trim()).forEach(line => {
+          addText(line, 10, false, '#333333');
+        });
+        y += 4;
+      }
+
+      // CT
+      if (ct) {
+        addSection('✅ CONTRÔLE TECHNIQUE');
+        ct.split('\n').filter(l => l.trim()).forEach(line => {
+          addText(line, 10, false, '#333333');
+        });
+        y += 4;
+      }
+
+      // VENTE
+      addSection('📅 INFORMATIONS DE VENTE');
+      vendeur.split('\n').filter(l => l.trim()).forEach(line => {
+        addText(line, 10, false, '#333333');
+      });
+
+      // FOOTER LÉGAL
+      y += 8;
+      addLine();
+      doc.setFillColor(240, 244, 255);
+      doc.rect(margin, y, maxW, 20, 'F');
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor('#666666');
+      doc.text('Document de preuve de bonne foi — Art. 1641 & 1645 du Code Civil', margin + 2, y + 7);
+      doc.text('AutoNet archive cette annonce 24 mois après la date de vente.', margin + 2, y + 13);
+      doc.text('Généré le ' + new Date().toLocaleDateString('fr-FR'), margin + 2, y + 19);
+
+      // Save/share PDF - use base64 data URI for Capacitor iOS
+      const pdfName = 'AutoNet_' + titre.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+      const pdfBase64 = doc.output('datauristring');
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = pdfBase64;
+      link.download = pdfName;
+      link.click();
+      return;
+    } catch(e) {
+      console.error('PDF error:', e);
+    }
+  }
 
   let texte = '🚗 ' + titre + '\n';
   texte += '━━━━━━━━━━━━━━━━━━━━\n\n';
