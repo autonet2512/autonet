@@ -1507,7 +1507,10 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         <h2 class="section-title" id="print-titre">Récapitulatif de vente</h2>
       </div>
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="partagerRecap()">📤 Partager le récapitulatif</button>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="window.print()">🖨️ Imprimer</button>
+          <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="partagerRecap()">📤 Partager</button>
+        </div>
         <button class="btn btn-outline" onclick="history.back()">← Retour</button>
       </div>
     </div>
