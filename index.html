@@ -812,7 +812,10 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
 
 <!-- NAV -->
 <nav>
-  <div class="logo" onclick="showPage('accueil')">Auto<span>Net</span></div>
+  <div class="logo" onclick="showPage('accueil')" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+    <img src="logo.png" alt="AutoNet" style="height:40px;width:40px;object-fit:contain;" onerror="this.style.display='none'">
+    <span style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:var(--texte);">Auto<span style="color:var(--bleu);">Net</span></span>
+  </div>
   <ul class="nav-links">
     <li><a onclick="showPage('accueil')">Accueil</a></li>
     <li><a onclick="showPage('annonces')">Annonces</a></li>
@@ -1507,10 +1510,27 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
         <h2 class="section-title" id="print-titre">Récapitulatif de vente</h2>
       </div>
       <div style="display:flex;gap:10px;">
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:10px;margin-bottom:12px;">
           <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="window.print()">🖨️ Imprimer</button>
           <button class="btn btn-outline" style="flex:1;justify-content:center;" onclick="partagerRecap()">📤 Partager</button>
         </div>
+        <div id="print-help-msg" style="background:var(--bleu-pale);border:1px solid var(--bleu-mid);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--bleu);line-height:1.6;"></div>
+        <script>
+        (function() {
+          const msg = document.getElementById('print-help-msg');
+          if (!msg) return;
+          const isCapacitor = window.Capacitor && window.Capacitor.isNative;
+          const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+          const isAndroid = /Android/.test(navigator.userAgent);
+          if (isCapacitor && isIOS) {
+            msg.innerHTML = '📱 <strong>Sur iPhone :</strong> Appuyez sur <strong>📤 Partager</strong> puis choisissez <strong>"Enregistrer dans Fichiers"</strong> ou <strong>"Imprimer"</strong> via AirPrint pour imprimer ou sauvegarder.';
+          } else if (isCapacitor && isAndroid) {
+            msg.innerHTML = '📱 <strong>Sur Android :</strong> Appuyez sur <strong>📤 Partager</strong> puis choisissez votre application préférée (Gmail, WhatsApp, Drive...) pour envoyer ou sauvegarder le récapitulatif.';
+          } else {
+            msg.innerHTML = '💻 <strong>Sur navigateur :</strong> Appuyez sur <strong>🖨️ Imprimer</strong> puis choisissez <strong>"Enregistrer en PDF"</strong> comme imprimante pour obtenir un beau document PDF.';
+          }
+        })();
+        </script>
         <button class="btn btn-outline" onclick="history.back()">← Retour</button>
       </div>
     </div>
