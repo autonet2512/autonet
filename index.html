@@ -1136,9 +1136,10 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
           <div class="annonce-price-big" id="detail-prix"></div>
           <div class="annonce-price-sub" id="detail-price-sub">Prix net vendeur · Particulier</div>
           <div class="score-global">
-            <div class="score-num">9.2</div>
-            <div><div style="font-size:13px;font-weight:600;color:var(--texte);">Score de transparence</div><div style="font-size:12px;color:var(--texte-muted);margin-top:2px;">Dossier complet</div></div>
+            <div class="score-num" id="detail-score-num">-</div>
+            <div><div style="font-size:13px;font-weight:600;color:var(--texte);">Score de transparence</div><div style="font-size:12px;color:var(--texte-muted);margin-top:2px;">sur 10</div></div>
           </div>
+          <div id="detail-score-details" style="margin-top:12px;"></div>
           <div id="detail-saves-count" style="text-align:center;font-size:13px;color:var(--texte-muted);margin-bottom:8px;"></div>
           <div id="detail-avg-stars" style="text-align:center;font-size:13px;color:#f59e0b;margin-bottom:16px;"></div>
           <div class="sidebar-actions">
@@ -1249,6 +1250,32 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
       <label for="f-masquer-tel" style="font-size:14px;font-weight:500;cursor:pointer;">🔒 Ne pas afficher mon numéro de téléphone publiquement</label>
     </div>
     <p style="font-size:12px;color:var(--texte-light);margin-bottom:8px;">Si coché, les acheteurs devront vous contacter uniquement via la messagerie AutoNet.</p>
+    <!-- SCORE INFO BOX -->
+    <div style="background:linear-gradient(135deg,var(--bleu-pale),#f0f4ff);border:1.5px solid var(--bleu-mid);border-radius:14px;padding:20px;margin-bottom:24px;">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:800;color:var(--bleu);margin-bottom:12px;">⭐ Comment obtenir un score de 10/10 ?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>📷 10 photos du véhicule</span><span style="font-weight:700;color:#059669;">+2 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>🔍 5+ photos de carrosserie</span><span style="font-weight:700;color:#059669;">+1.5 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>🔧 3+ factures d'entretien</span><span style="font-weight:700;color:#059669;">+2 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>✅ CT favorable -6 mois</span><span style="font-weight:700;color:#059669;">+2 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>📄 CSA Histovec</span><span style="font-weight:700;color:#059669;">+1.5 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>📝 Description détaillée (100+ mots)</span><span style="font-weight:700;color:#059669;">+1 pt</span>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--texte-muted);">Plus votre score est élevé, plus votre annonce inspire confiance et se démarque !</div>
+    </div>
+
     <div class="form-section-title">📷 Photos du véhicule</div>
     <div style="background:var(--bleu-pale);border:1px solid var(--bleu-mid);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--bleu);margin-bottom:12px;line-height:1.6;">
       💡 <strong>Badges visibles sur votre annonce :</strong><br>
@@ -1463,6 +1490,32 @@ footer { background: var(--texte); color: rgba(255,255,255,0.6); padding: 40px; 
     <input type="hidden" id="m-annonce-id">
 
     <!-- PHOTOS ACTUELLES -->
+    <!-- SCORE INFO BOX -->
+    <div style="background:linear-gradient(135deg,var(--bleu-pale),#f0f4ff);border:1.5px solid var(--bleu-mid);border-radius:14px;padding:20px;margin-bottom:24px;">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:800;color:var(--bleu);margin-bottom:12px;">⭐ Comment obtenir un score de 10/10 ?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>📷 10 photos du véhicule</span><span style="font-weight:700;color:#059669;">+2 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>🔍 5+ photos de carrosserie</span><span style="font-weight:700;color:#059669;">+1.5 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>🔧 3+ factures d'entretien</span><span style="font-weight:700;color:#059669;">+2 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>✅ CT favorable -6 mois</span><span style="font-weight:700;color:#059669;">+2 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>📄 CSA Histovec</span><span style="font-weight:700;color:#059669;">+1.5 pts</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:6px 10px;background:rgba(255,255,255,0.6);border-radius:8px;">
+          <span>📝 Description détaillée (100+ mots)</span><span style="font-weight:700;color:#059669;">+1 pt</span>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--texte-muted);">Plus votre score est élevé, plus votre annonce inspire confiance et se démarque !</div>
+    </div>
+
     <div class="form-section-title">📷 Photos du véhicule</div>
     <p style="font-size:13px;color:var(--texte-muted);margin-bottom:12px;">Photos actuelles de l'annonce :</p>
     <div id="m-photos-actuelles" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
@@ -2350,6 +2403,7 @@ async function voirDetail(id) {
     chargerEntretien(id);
     chargerCT(id);
     // Load avg stars for vendor
+    afficherScore(id);
      db.from('avis').select('note').eq('vendeur_email', data.email).then(({ data: avisData }) => {
        const avgEl = document.getElementById('detail-avg-stars');
        const avgSidebar = document.getElementById('detail-avg-stars-sidebar');
@@ -3910,6 +3964,103 @@ function onDeptChangeForm() {
   if (!locInput.value) {
     const deptName = deptSelect.value.replace(/\s*\(\d+[AB]?\)/, '').trim();
     locInput.placeholder = 'Ville (ex: dans ' + deptName + ')';
+  }
+}
+
+// ── SCORE DE TRANSPARENCE ──
+async function calculerScore(annonceId) {
+  let score = 0;
+  let details = [];
+
+  try {
+    // Photos principales
+    const { data: photos } = await db.storage.from('photos').list(String(annonceId));
+    const nbPhotos = photos ? photos.filter(f => f.name && !f.name.startsWith('.')).length : 0;
+    let ptsPhotos = 0;
+    if (nbPhotos >= 10) ptsPhotos = 2;
+    else if (nbPhotos >= 8) ptsPhotos = 1.5;
+    else if (nbPhotos >= 5) ptsPhotos = 1;
+    else if (nbPhotos >= 1) ptsPhotos = 0.5;
+    score += ptsPhotos;
+    details.push({ label: '📷 Photos principales (' + nbPhotos + ')', pts: ptsPhotos, max: 2 });
+
+    // Photos défauts
+    const { data: defauts } = await db.storage.from('defauts').list(String(annonceId));
+    const nbDefauts = defauts ? defauts.filter(f => f.name && !f.name.startsWith('.')).length : 0;
+    let ptsDefauts = 0;
+    if (nbDefauts >= 5) ptsDefauts = 1.5;
+    else if (nbDefauts >= 3) ptsDefauts = 1;
+    else if (nbDefauts >= 1) ptsDefauts = 0.5;
+    score += ptsDefauts;
+    details.push({ label: '🔍 Photos carrosserie (' + nbDefauts + ')', pts: ptsDefauts, max: 1.5 });
+
+    // Entretien/Factures
+    const { count: nbEntretiens } = await db.from('entretiens').select('id', { count: 'exact', head: true }).eq('annonce_id', annonceId);
+    let ptsEntretien = 0;
+    if (nbEntretiens >= 3) ptsEntretien = 2;
+    else if (nbEntretiens >= 2) ptsEntretien = 1;
+    else if (nbEntretiens >= 1) ptsEntretien = 0.5;
+    score += ptsEntretien;
+    details.push({ label: '🔧 Entretien/Factures (' + (nbEntretiens || 0) + ')', pts: ptsEntretien, max: 2 });
+
+    // CT
+    const { data: cts } = await db.from('controles').select('date, resultat').eq('annonce_id', annonceId).order('date', { ascending: false }).limit(1);
+    let ptsCT = 0;
+    if (cts && cts.length > 0) {
+      const sixMoisAgo = new Date();
+      sixMoisAgo.setMonth(sixMoisAgo.getMonth() - 6);
+      const estRecent = new Date(cts[0].date) >= sixMoisAgo;
+      const estFavorable = cts[0].resultat === 'Favorable';
+      if (estRecent && estFavorable) ptsCT = 2;
+      else ptsCT = 1;
+    }
+    score += ptsCT;
+    details.push({ label: '✅ Contrôle technique', pts: ptsCT, max: 2 });
+
+    // CSA
+    const { data: csaFiles } = await db.storage.from('csa').list(String(annonceId));
+    const aCSA = csaFiles && csaFiles.filter(f => f.name && !f.name.startsWith('.')).length > 0;
+    const ptsCSA = aCSA ? 1.5 : 0;
+    score += ptsCSA;
+    details.push({ label: '📄 CSA Histovec', pts: ptsCSA, max: 1.5 });
+
+    // Description
+    const { data: annonce } = await db.from('annonces').select('description').eq('id', annonceId).single();
+    const descWords = annonce && annonce.description ? annonce.description.trim().split(/\s+/).length : 0;
+    let ptsDesc = 0;
+    if (descWords >= 100) ptsDesc = 1;
+    else if (descWords >= 20) ptsDesc = 0.5;
+    score += ptsDesc;
+    details.push({ label: '📝 Description (' + descWords + ' mots)', pts: ptsDesc, max: 1 });
+
+  } catch(e) {
+    console.error('Score error:', e);
+  }
+
+  return { score: Math.min(10, Math.round(score * 10) / 10), details };
+}
+
+async function afficherScore(annonceId) {
+  const { score, details } = await calculerScore(annonceId);
+  const scoreEl = document.getElementById('detail-score-num');
+  const scoreDetailsEl = document.getElementById('detail-score-details');
+  
+  if (scoreEl) {
+    scoreEl.textContent = score.toFixed(1);
+    const color = score >= 8 ? '#059669' : score >= 5 ? '#d97706' : '#dc2626';
+    scoreEl.style.color = color;
+  }
+
+  if (scoreDetailsEl) {
+    scoreDetailsEl.innerHTML = details.map(d => {
+      const pct = (d.pts / d.max) * 100;
+      const color = d.pts === d.max ? '#059669' : d.pts > 0 ? '#d97706' : '#dc2626';
+      const icon = d.pts === d.max ? '✅' : d.pts > 0 ? '⚠️' : '❌';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">' +
+        '<span style="font-size:12px;">' + icon + ' ' + d.label + '</span>' +
+        '<span style="font-size:12px;font-weight:700;color:' + color + ';">' + d.pts + '/' + d.max + '</span>' +
+        '</div>';
+    }).join('');
   }
 }
 
